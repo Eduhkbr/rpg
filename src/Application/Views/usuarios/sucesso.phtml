@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Central RPG</title>
+    <title>Cadastro Realizado! - Central RPG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,65 +27,24 @@
 </head>
 <body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
 
-<div class="glass-card w-full max-w-md p-8 rounded-lg shadow-2xl shadow-black/50">
-    <header class="text-center mb-8">
-        <h1 class="font-typewriter text-4xl font-bold text-red-500" style="text-shadow: 0 0 10px #e53e3e;">Central RPG</h1>
-        <p class="text-gray-400">Crie sua conta para iniciar a jornada.</p>
+<div class="glass-card w-full max-w-md p-8 rounded-lg shadow-2xl shadow-black/50 text-center">
+    <header class="mb-6">
+        <h1 class="font-typewriter text-3xl font-bold text-green-400" style="text-shadow: 0 0 10px #2f855a;">Cadastro Realizado com Sucesso!</h1>
     </header>
 
-    <?php if (isset($erro)): ?>
-        <!-- Bloco de Erro -->
-        <div class="bg-red-900/50 border border-red-500 text-red-300 p-3 rounded-lg mb-6 text-center">
-            <p><?php echo htmlspecialchars($erro); ?></p>
-        </div>
-    <?php endif; ?>
+    <div class="text-gray-300 space-y-4">
+        <p>A sua conta foi criada.</p>
+        <p>Enviámos um <strong class="text-yellow-400">código de verificação</strong> para o seu e-mail. Por favor, verifique a sua caixa de entrada (e a pasta de spam) para ativar a sua conta.</p>
+    </div>
 
-    <!-- Formulário de Cadastro -->
-    <form action="/cadastro" method="POST">
-        <div class="space-y-6">
-            <div>
-                <label for="nome_usuario" class="block text-sm font-bold text-gray-400 mb-2">Nome de Usuário</label>
-                <input
-                    type="text"
-                    id="nome_usuario"
-                    name="nome_usuario"
-                    class="w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
-                    value="<?php echo isset($nomeUsuario) ? htmlspecialchars($nomeUsuario) : ''; ?>"
-                    required
-                >
-            </div>
-            <div>
-                <label for="email" class="block text-sm font-bold text-gray-400 mb-2">E-mail</label>
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    class="w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
-                    value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>"
-                    required
-                >
-            </div>
-            <div>
-                <label for="senha" class="block text-sm font-bold text-gray-400 mb-2">Senha</label>
-                <input
-                    type="password"
-                    id="senha"
-                    name="senha"
-                    class="w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
-                    required
-                >
-            </div>
-        </div>
+    <div class="mt-8">
+        <a href="/verificar" class="w-full inline-block bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow-lg shadow-yellow-900/50">
+            Verificar a Minha Conta Agora
+        </a>
+    </div>
 
-        <div class="mt-8">
-            <button type="submit" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow-lg shadow-red-900/50">
-                Criar Conta
-            </button>
-        </div>
-    </form>
-
-    <div class="text-center mt-6">
-        <a href="/login" class="text-sm text-gray-400 hover:text-white hover:underline">Já tem uma conta? Faça o login</a>
+    <div class="text-center mt-4">
+        <a href="/login" class="text-sm text-gray-400 hover:text-white hover:underline">Ir para o Login</a>
     </div>
 </div>
 

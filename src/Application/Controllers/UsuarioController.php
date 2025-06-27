@@ -25,9 +25,12 @@ class UsuarioController
      * @param CadastroService $cadastroService
      * @param VerificacaoEmailService $verificacaoEmailService
      */
-    public function __construct(CadastroService $cadastroService)
-    {
+    public function __construct(
+        CadastroService $cadastroService,
+        VerificacaoEmailService $verificacaoEmailService
+    ) {
         $this->cadastroService = $cadastroService;
+        $this->verificacaoEmailService = $verificacaoEmailService;
     }
 
     /**
@@ -134,6 +137,26 @@ class UsuarioController
                 'erro' => 'Ocorreu um erro inesperado ao verificar o seu código.'
             ]);
         }
+    }
+
+    /**
+     * Exibe o formulário de login.
+     * Lida com a requisição GET para /login.
+     */
+    public function exibirFormularioLogin(): void
+    {
+        // Verifica se existe uma "flash message" na sessão (ex: vinda da verificação).
+        $flash_message = $_SESSION['flash_message'] ?? null;
+
+        // Se existir, remove-a da sessão para que não seja mostrada novamente.
+        if ($flash_message) {
+            unset($_SESSION['flash_message']);
+        }
+
+        // Renderiza a view, passando a mensagem (se houver) para ela.
+        $this->renderView('usuarios/login', [
+            'flash_message' => $flash_message
+        ]);
     }
 
     /**

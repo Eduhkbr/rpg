@@ -82,9 +82,13 @@ $emailService = new App\Infrastructure\Notification\PHPMailerAdapter($emailConfi
 
 // Camada de Domínio (Serviços)
 $cadastroService = new App\Domain\Services\CadastroService($usuarioRepository, $emailService);
+$verificacaoEmailService = new App\Domain\Services\VerificacaoEmailService($usuarioRepository);
 
 // Camada de Aplicação (Controllers)
-$usuarioController = new App\Application\Controllers\UsuarioController($cadastroService);
+$usuarioController = new App\Application\Controllers\UsuarioController(
+    $cadastroService,
+    $verificacaoEmailService
+);
 
 
 // --- 4. Definição das Rotas ---
