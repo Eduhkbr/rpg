@@ -97,6 +97,9 @@ $router->get('/', function() {
     exit();
 });
 
+
+$router->get('/login', [$usuarioController, 'exibirFormularioLogin']);
+
 // Rota para exibir o formulário de cadastro.
 $router->get('/cadastro', [$usuarioController, 'exibirFormularioCadastro']);
 
@@ -106,6 +109,9 @@ $router->post('/cadastro', [$usuarioController, 'processarCadastro']);
 // Rota para a página de sucesso após o cadastro.
 $router->get('/cadastro/sucesso', [$usuarioController, 'exibirCadastroSucesso']);
 
+// Rotas de Verificação
+$router->get('/verificar', [$usuarioController, 'exibirFormularioVerificacao']);
+$router->post('/verificar', [$usuarioController, 'processarVerificacao']);
 
 // --- 5. Iniciar a Aplicação ---
 // O roteador irá analisar a URL da requisição e chamar o método correto do controller.

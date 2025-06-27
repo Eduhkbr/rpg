@@ -3,7 +3,9 @@
 namespace App\Application\Controllers;
 
 use App\Domain\Services\CadastroService;
+use App\Domain\Services\VerificacaoEmailService;
 use App\Domain\Exceptions\EmailJaExisteException;
+use App\Domain\Exceptions\CodigoInvalidoException;
 use Exception;
 
 /**
@@ -15,11 +17,13 @@ use Exception;
 class UsuarioController
 {
     private CadastroService $cadastroService;
+    private VerificacaoEmailService $verificacaoEmailService;
 
     /**
      * O construtor recebe as dependências necessárias
      *
      * @param CadastroService $cadastroService
+     * @param VerificacaoEmailService $verificacaoEmailService
      */
     public function __construct(CadastroService $cadastroService)
     {
@@ -86,6 +90,50 @@ class UsuarioController
     public function exibirCadastroSucesso(): void
     {
         $this->renderView('usuarios/sucesso');
+    }
+
+    /**
+     * Exibe o formulário para o utilizador inserir o código de verificação.
+     * Lida com a requisição GET para /verificar.
+     */
+    public function exibirFormularioVerificacao(): void
+    {
+        $this->renderView('usuarios/verificar');
+    }
+
+    /**
+     * Processa o código de verificação submetido pelo utilizador.
+     * Lida com a requisição POST para /verificar.
+     */
+    public function processarVerificacao(): void
+    {
+        // 1. Coleta o código do formulário.
+        $codigo = $_POST['codigo'] ?? '';
+
+        try {
+            // 2. Delega a lógica para o serviço de domínio.
+            $this->verificacaoEmailService->executar($codigo);
+
+            // 3. Sucesso: Prepara uma mensagem de sucesso e redireciona para o login.
+            // Usamos a sessão para passar a mensagem entre as requisições (Flash Message).
+            $_SESSION['flash_message'] = [
+                'type' => 'sucesso',
+                'message' => 'E-mail verificado com sucesso! Por favor, faça o login.'
+            ];
+            header('Location: /login');
+            exit();
+
+        } catch (CodigoInvalidoException $e) {
+            // 4. Falha Específica: Código inválido. Renderiza o formulário novamente com o erro.
+            $this->renderView('usuarios/verificar', [
+                'erro' => $e->getMessage()
+            ]);
+        } catch (Exception $e) {
+            // 5. Falha Genérica: Outro erro inesperado.
+            $this->renderView('usuarios/verificar', [
+                'erro' => 'Ocorreu um erro inesperado ao verificar o seu código.'
+            ]);
+        }
     }
 
     /**

@@ -11,21 +11,11 @@ use PDOException;
  * Classe MySQLUsuarioRepository
  *
  * Implementação concreta da UsuarioRepositoryInterface para um banco de dados MySQL.
- * Esta classe é responsável por todo o código SQL relacionado à entidade Usuario.
  */
 class MySQLUsuarioRepository implements UsuarioRepositoryInterface
 {
-    /**
-     * @var PDO A conexão com o banco de dados.
-     */
     private PDO $conexao;
 
-    /**
-     * O construtor recebe a conexão com o banco de dados como uma dependência.
-     * Isso é conhecido como Injeção de Dependência.
-     *
-     * @param PDO $conexao Uma instância de PDO já configurada.
-     */
     public function __construct(PDO $conexao)
     {
         $this->conexao = $conexao;
@@ -45,21 +35,11 @@ class MySQLUsuarioRepository implements UsuarioRepositoryInterface
             $dadosUsuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$dadosUsuario) {
-                return null; // Usuário não encontrado.
+                return null;
             }
 
-            // Cria e retorna um novo objeto Usuario com os dados do banco.
-            return new Usuario(
-                $dadosUsuario['nome_usuario'],
-                $dadosUsuario['email'],
-                $dadosUsuario['senha_hash'],
-                $dadosUsuario['id'],
-                (bool)$dadosUsuario['email_verificado'],
-                $dadosUsuario['codigo_verificacao'],
-                $dadosUsuario['data_cadastro']
-            );
+            return $this->mapearDadosParaUsuario($dadosUsuario);
         } catch (PDOException $e) {
-            // Em uma aplicação real, você deveria logar este erro.
             error_log("Erro no Repositório de Usuário (buscarPorEmail): " . $e->getMessage());
             return null;
         }
@@ -70,7 +50,6 @@ class MySQLUsuarioRepository implements UsuarioRepositoryInterface
      */
     public function buscarPorId(int $id): ?Usuario
     {
-        // Lógica similar a buscarPorEmail, mas usando o ID.
         $sql = "SELECT * FROM usuarios WHERE id = :id LIMIT 1;";
         try {
             $stmt = $this->conexao->prepare($sql);
@@ -82,17 +61,34 @@ class MySQLUsuarioRepository implements UsuarioRepositoryInterface
                 return null;
             }
 
-            return new Usuario(
-                $dadosUsuario['nome_usuario'],
-                $dadosUsuario['email'],
-                $dadosUsuario['senha_hash'],
-                $dadosUsuario['id'],
-                (bool)$dadosUsuario['email_verificado'],
-                $dadosUsuario['codigo_verificacao'],
-                $dadosUsuario['data_cadastro']
-            );
+            return $this->mapearDadosParaUsuario($dadosUsuario);
         } catch (PDOException $e) {
             error_log("Erro no Repositório de Usuário (buscarPorId): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     * NOVO MÉTODO IMPLEMENTADO
+     */
+    public function buscarPorCodigoVerificacao(string $codigo): ?Usuario
+    {
+        $sql = "SELECT * FROM usuarios WHERE codigo_verificacao = :codigo AND email_verificado = FALSE LIMIT 1;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':codigo', $codigo);
+            $stmt->execute();
+            $dadosUsuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$dadosUsuario) {
+                return null; // Nenhum utilizador encontrado com este código.
+            }
+
+            // Reutiliza o método de mapeamento para criar o objeto Usuario.
+            return $this->mapearDadosParaUsuario($dadosUsuario);
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Usuário (buscarPorCodigoVerificacao): " . $e->getMessage());
             return null;
         }
     }
@@ -102,11 +98,9 @@ class MySQLUsuarioRepository implements UsuarioRepositoryInterface
      */
     public function salvar(Usuario $usuario): bool
     {
-        // Se o usuário já tem um ID, é uma atualização (UPDATE).
         if ($usuario->getId() !== null) {
             return $this->atualizar($usuario);
         }
-        // Caso contrário, é uma criação (INSERT).
         return $this->criar($usuario);
     }
 
@@ -174,5 +168,25 @@ class MySQLUsuarioRepository implements UsuarioRepositoryInterface
             error_log("Erro no Repositório de Usuário (atualizar): " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Método auxiliar para mapear um array de dados do banco para um objeto Usuario.
+     * Evita a repetição de código nos métodos de busca.
+     *
+     * @param array $dados O array associativo vindo do fetch do PDO.
+     * @return Usuario
+     */
+    private function mapearDadosParaUsuario(array $dados): Usuario
+    {
+        return new Usuario(
+            $dados['nome_usuario'],
+            $dados['email'],
+            $dados['senha_hash'],
+            $dados['id'],
+            (bool)$dados['email_verificado'],
+            $dados['codigo_verificacao'],
+            $dados['data_cadastro']
+        );
     }
 }
