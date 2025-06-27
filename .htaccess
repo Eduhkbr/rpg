@@ -1,0 +1,11 @@
+    # Ativa o motor de reescrita de URL
+    RewriteEngine On
+
+    # Se a requisição NÃO for para um arquivo existente...
+    RewriteCond %{REQUEST_FILENAME} !-f
+    # E se a requisição NÃO for para um diretório existente...
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # ...então, redirecione a requisição para o index.php.
+    # O [QSA,L] garante que os parâmetros da URL (como ?id=123) sejam mantidos.
+    RewriteRule ^ index.php [QSA,L]
