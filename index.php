@@ -45,13 +45,9 @@ spl_autoload_register(function ($class) {
 });
 
 // --- Inclusão do PHPMailer ---
-// Se você usou o Composer, a linha abaixo é suficiente.
-// require __DIR__ . '/vendor/autoload.php';
-
-// Se instalou manualmente (exemplo):
-// require __DIR__ . '/libs/PHPMailer/src/Exception.php';
-// require __DIR__ . '/libs/PHPMailer/src/PHPMailer.php';
-// require __DIR__ . '/libs/PHPMailer/src/SMTP.php';
+require __DIR__ . '/libs/PHPMailer/src/Exception.php';
+require __DIR__ . '/libs/PHPMailer/src/PHPMailer.php';
+require __DIR__ . '/libs/PHPMailer/src/SMTP.php';
 
 
 // --- 2. Carregamento de Configurações e Conexão com o Banco ---
