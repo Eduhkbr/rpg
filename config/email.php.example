@@ -1,0 +1,11 @@
+<?php
+return [
+    'host' => 'smtp.hostinger.com', // Host SMTP do seu provedor
+    'port' => 465,                  // Porta (587 para TLS, 465 para SSL)
+    'smtp_secure' => 'ssl',         // 'tls' ou 'ssl'
+    'smtp_auth' => true,
+    'username' => 'seu_email@seudominio.com', // Seu e-mail completo
+    'password' => 'sua_senha_de_email_aqui',
+    'from_email' => 'nao-responda@seudominio.com',
+    'from_name' => 'Central RPG'
+];

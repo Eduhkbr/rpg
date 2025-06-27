@@ -2,6 +2,7 @@
 
 # Ignorar o arquivo de configuração com as credenciais reais.
 config/database.php
+config/email.php
 
 # Ignorar a pasta 'vendor'
 /vendor/
