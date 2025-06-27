@@ -45,9 +45,9 @@ spl_autoload_register(function ($class) {
 });
 
 // --- Inclusão do PHPMailer ---
-require __DIR__ . '/libs/PHPMailer/src/Exception.php';
-require __DIR__ . '/libs/PHPMailer/src/PHPMailer.php';
-require __DIR__ . '/libs/PHPMailer/src/SMTP.php';
+require __DIR__ . '/libs/PHPMailer/Exception.php';
+require __DIR__ . '/libs/PHPMailer/PHPMailer.php';
+require __DIR__ . '/libs/PHPMailer/SMTP.php';
 
 
 // --- 2. Carregamento de Configurações e Conexão com o Banco ---
