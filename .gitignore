@@ -1,0 +1,7 @@
+# .gitignore
+
+# Ignorar o arquivo de configuração com as credenciais reais.
+config/database.php
+
+# Ignorar a pasta 'vendor'
+/vendor/

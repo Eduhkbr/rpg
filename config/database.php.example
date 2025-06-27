@@ -1,0 +1,19 @@
+<?php
+
+// config/database.php.example
+
+/**
+ * ARQUIVO DE EXEMPLO.
+ * NÃO COLOQUE CREDENCIAIS REAIS AQUI.
+ *
+ * Para configurar sua conexão, copie este arquivo para 'config/database.php'
+ * e preencha com suas credenciais de banco de dados locais.
+ * O arquivo 'config/database.php' está no .gitignore e não será versionado.
+ */
+return [
+    'host' => 'localhost',
+    'dbname' => 'u880170041_central_rpg',
+    'user' => 'seu_usuario_do_banco_aqui',
+    'password' => 'sua_senha_secreta_aqui',
+    'charset' => 'utf8mb4'
+];
