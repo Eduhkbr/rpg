@@ -79,18 +79,18 @@ try {
 // Camada de Infraestrutura
 $usuarioRepository = new App\Infrastructure\Persistence\MySQLUsuarioRepository($pdo);
 $emailService = new App\Infrastructure\Notification\PHPMailerAdapter($emailConfig);
+$sistemaRPGRepository = new App\Infrastructure\Persistence\MySQLSistemaRPGRepository($pdo);
+$salaRepository = new App\Infrastructure\Persistence\MySQLSalaRepository($pdo);
 
 // Camada de Domínio (Serviços)
 $cadastroService = new App\Domain\Services\CadastroService($usuarioRepository, $emailService);
 $verificacaoEmailService = new App\Domain\Services\VerificacaoEmailService($usuarioRepository);
-$loginService = new App\Domain\Services\LoginService($usuarioRepository); // <-- NOVO SERVIÇO MONTADO
+$loginService = new App\Domain\Services\LoginService($usuarioRepository);
+$criarSalaService = new App\Domain\Services\CriarSalaService($salaRepository, $usuarioRepository); // <-- NOVO
 
 // Camada de Aplicação (Controllers)
-$usuarioController = new App\Application\Controllers\UsuarioController(
-    $cadastroService,
-    $verificacaoEmailService,
-    $loginService
-);
+$usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService);
+$salaController = new App\Application\Controllers\SalaController($criarSalaService, $sistemaRPGRepository); // <-- NOVO
 
 
 // --- 4. Definição das Rotas (ATUALIZADO) ---
@@ -111,6 +111,10 @@ $router->get('/cadastro/sucesso', [$usuarioController, 'exibirCadastroSucesso'])
 // Rotas de Verificação
 $router->get('/verificar', [$usuarioController, 'exibirFormularioVerificacao']);
 $router->post('/verificar', [$usuarioController, 'processarVerificacao']);
+
+// Rotas de salas
+$router->get('/salas/criar', [$salaController, 'exibirFormularioCriacao']);
+$router->post('/salas/criar', [$salaController, 'processarCriacao']);
 
 // --- 5. Iniciar a Aplicação ---
 $router->dispatch();
