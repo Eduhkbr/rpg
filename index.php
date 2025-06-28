@@ -90,12 +90,12 @@ $loginService = new App\Domain\Services\LoginService($usuarioRepository);
 $criarSalaService = new App\Domain\Services\CriarSalaService($salaRepository, $usuarioRepository);
 $entrarSalaService = new App\Domain\Services\EntrarSalaService($salaRepository);
 $criarPersonagemService = new App\Domain\Services\CriarPersonagemService($personagemRepository);
+$deletarPersonagemService = new App\Domain\Services\DeletarPersonagemService($personagemRepository);
 
 // Camada de Aplicação (Controllers)
 $usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService, $salaRepository, $personagemRepository);
 $salaController = new App\Application\Controllers\SalaController($criarSalaService, $entrarSalaService, $sistemaRPGRepository);
-$personagemController = new App\Application\Controllers\PersonagemController($criarPersonagemService, $sistemaRPGRepository, $personagemRepository);
-
+$personagemController = new App\Application\Controllers\PersonagemController($criarPersonagemService, $deletarPersonagemService, $sistemaRPGRepository, $personagemRepository);
 
 // --- 4. Definição das Rotas (ATUALIZADO) ---
 $router = new App\Application\Router();
@@ -125,6 +125,7 @@ $router->post('/salas/entrar', [$salaController, 'processarEntrada']);
 $router->get('/personagens/criar', [$personagemController, 'exibirFormularioCriacao']);
 $router->post('/personagens/criar', [$personagemController, 'processarCriacao']);
 $router->get('/personagens/ver/{id}', [$personagemController, 'exibirFicha']);
+$router->post('/personagens/deletar/{id}', [$personagemController, 'processarDelecao']);
 
 // --- 5. Iniciar a Aplicação ---
 $router->dispatch();

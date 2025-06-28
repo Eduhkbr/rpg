@@ -121,6 +121,22 @@ class MySQLPersonagemRepository implements PersonagemRepositoryInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function deletar(int $idPersonagem): bool
+    {
+        $sql = "DELETE FROM personagens WHERE id = :id;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id', $idPersonagem, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Personagem (deletar): " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Método auxiliar para mapear um array de dados do banco para um objeto Personagem.
      */
     private function mapearDadosParaPersonagem(array $dados): Personagem

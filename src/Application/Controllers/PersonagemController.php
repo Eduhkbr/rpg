@@ -3,8 +3,10 @@
 namespace App\Application\Controllers;
 
 use App\Domain\Repositories\PersonagemRepositoryInterface;
+use App\Domain\Services\DeletarPersonagemService;
 use App\Domain\Services\CriarPersonagemService;
 use App\Domain\Repositories\SistemaRPGRepositoryInterface;
+use App\Domain\Exceptions\AcessoNegadoException;
 use Exception;
 
 /**
@@ -15,15 +17,18 @@ use Exception;
 class PersonagemController
 {
     private CriarPersonagemService $criarPersonagemService;
+    private DeletarPersonagemService $deletarPersonagemService;
     private SistemaRPGRepositoryInterface $sistemaRPGRepository;
     private PersonagemRepositoryInterface $personagemRepository;
 
     public function __construct(
         CriarPersonagemService $criarPersonagemService,
+        DeletarPersonagemService $deletarPersonagemService,
         SistemaRPGRepositoryInterface $sistemaRPGRepository,
         PersonagemRepositoryInterface $personagemRepository
     ) {
         $this->criarPersonagemService = $criarPersonagemService;
+        $this->deletarPersonagemService = $deletarPersonagemService;
         $this->sistemaRPGRepository = $sistemaRPGRepository;
         $this->personagemRepository = $personagemRepository;
     }
@@ -144,6 +149,37 @@ class PersonagemController
         } catch (Exception $e) {
             // Em caso de erro inesperado na base de dados.
             $_SESSION['flash_message'] = ['type' => 'erro', 'message' => 'Ocorreu um erro ao buscar os dados do personagem.'];
+            header('Location: /dashboard');
+            exit();
+        }
+    }
+
+    /**
+     * Processa o pedido de exclusão de um personagem.
+     * Lida com a requisição POST para /personagens/deletar/{id}.
+     *
+     * @param int $id O ID do personagem a ser excluído.
+     */
+    public function processarDelecao(int $id): void
+    {
+        // 1. Controlo de Acesso: Verifica se o utilizador está logado.
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit();
+        }
+
+        try {
+            // 2. Delega a lógica de negócio para o serviço de domínio.
+            $this->deletarPersonagemService->executar($id, $_SESSION['user_id']);
+
+            // 3. Sucesso: Prepara uma mensagem e redireciona para o painel de controlo.
+            $_SESSION['flash_message'] = ['type' => 'sucesso', 'message' => 'Personagem excluído com sucesso.'];
+            header('Location: /dashboard');
+            exit();
+
+        } catch (AcessoNegadoException | Exception $e) {
+            // 4. Falha: Se o utilizador não for o dono ou ocorrer outro erro.
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
             header('Location: /dashboard');
             exit();
         }

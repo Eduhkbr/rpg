@@ -76,7 +76,17 @@ function renderFichaData(array $data): void
     <div>
         <?php renderFichaData($ficha); ?>
     </div>
+    <!-- Secção de Ações e Exclusão -->
+    <div class="mt-8 pt-6 border-t border-red-900/50">
+        <h3 class="text-xl font-bold text-red-500 mb-4">Zona de Perigo</h3>
+        <p class="text-gray-400 mb-4">A exclusão de um personagem é uma ação permanente e não pode ser desfeita.</p>
 
+        <form action="/personagens/deletar/<?php echo $personagem->getId(); ?>" method="POST" onsubmit="return confirm('Tem a certeza que quer excluir permanentemente este personagem? Esta ação não pode ser desfeita.');">
+            <button type="submit" class="w-full sm:w-auto bg-red-800 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                Excluir Personagem Permanentemente
+            </button>
+        </form>
+    </div>
 </div>
 
 </body>

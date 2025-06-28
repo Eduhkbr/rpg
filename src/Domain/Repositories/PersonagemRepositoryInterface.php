@@ -37,4 +37,12 @@ interface PersonagemRepositoryInterface
      * @return Personagem|null Retorna um objeto Personagem se encontrado, ou null caso contrário.
      */
     public function buscarPorId(int $id): ?Personagem;
+
+    /**
+     * Deleta um personagem da fonte de dados pelo seu ID.
+     *
+     * @param int $idPersonagem O ID do personagem a ser deletado.
+     * @return bool Retorna true em caso de sucesso, false em caso de falha.
+     */
+    public function deletar(int $idPersonagem): bool;
 }
