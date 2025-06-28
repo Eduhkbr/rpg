@@ -81,7 +81,35 @@
                 </div>
             <?php endif; ?>
         </div>
-
+        <h2 class="text-2xl font-bold text-yellow-400 mt-8 mb-4">Os Meus Personagens</h2>
+        <div class="p-4 bg-black/20 rounded-lg">
+            <?php if (empty($personagens)): ?>
+                <p class="text-center text-gray-400">Ainda não criou nenhum personagem.</p>
+            <?php else: ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <?php foreach ($personagens as $infoPersonagem): ?>
+                        <div class="bg-gray-800/50 p-4 rounded-lg flex justify-between items-center hover:bg-gray-800/80 transition-colors">
+                            <div>
+                                <h3 class="font-bold text-lg text-white truncate" title="<?php echo htmlspecialchars($infoPersonagem['personagem']->getNomePersonagem()); ?>">
+                                    <?php echo htmlspecialchars($infoPersonagem['personagem']->getNomePersonagem()); ?>
+                                </h3>
+                                <p class="text-xs text-green-300 bg-green-900/50 inline-block px-2 py-1 rounded-full mt-1">
+                                    <?php echo htmlspecialchars($infoPersonagem['nomeSistema']); ?>
+                                </p>
+                            </div>
+                            <a href="/personagens/ver/<?php echo $infoPersonagem['personagem']->getId(); ?>" class="text-sm bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-lg transition-colors">
+                                Ver Ficha
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <div class="mt-4 text-right">
+            <a href="/personagens/criar" class="inline-block bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                + Criar Novo Personagem
+            </a>
+        </div>
         <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-black/20 p-6 rounded-lg text-center">
                 <h3 class="text-xl font-bold text-green-400 mb-3">Criar Nova Sala</h3>

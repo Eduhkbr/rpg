@@ -1,0 +1,117 @@
+<?php
+
+namespace App\Application\Controllers;
+
+use App\Domain\Services\CriarPersonagemService;
+use App\Domain\Repositories\SistemaRPGRepositoryInterface;
+use Exception;
+
+/**
+ * Classe PersonagemController
+ *
+ * Responsável por receber as requisições HTTP relacionadas às fichas de personagem.
+ */
+class PersonagemController
+{
+    private CriarPersonagemService $criarPersonagemService;
+    private SistemaRPGRepositoryInterface $sistemaRPGRepository;
+
+    public function __construct(
+        CriarPersonagemService $criarPersonagemService,
+        SistemaRPGRepositoryInterface $sistemaRPGRepository
+    ) {
+        $this->criarPersonagemService = $criarPersonagemService;
+        $this->sistemaRPGRepository = $sistemaRPGRepository;
+    }
+
+    /**
+     * Exibe o formulário para a criação de uma nova ficha de personagem.
+     * Lida com a requisição GET para /personagens/criar.
+     */
+    public function exibirFormularioCriacao(): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit();
+        }
+
+        $sistemas = $this->sistemaRPGRepository->buscarTodos();
+
+        // Verifica se um sistema foi selecionado através de um parâmetro GET na URL.
+        $idSistemaSelecionado = filter_input(INPUT_GET, 'id_sistema', FILTER_VALIDATE_INT);
+        $sistemaSelecionado = null;
+        $fichaTemplate = null;
+
+        if ($idSistemaSelecionado) {
+            // Procura o sistema selecionado na lista de sistemas disponíveis.
+            foreach ($sistemas as $sistema) {
+                if ($sistema->id === $idSistemaSelecionado) {
+                    $sistemaSelecionado = $sistema;
+                    // Descodifica o modelo JSON da ficha para um array PHP.
+                    $fichaTemplate = json_decode($sistema->fichaTemplateJson, true);
+                    break;
+                }
+            }
+        }
+
+        // Passa todos os dados necessários para a View.
+        $this->renderView('personagens/criar', [
+            'sistemas' => $sistemas,
+            'sistemaSelecionado' => $sistemaSelecionado,
+            'fichaTemplate' => $fichaTemplate
+        ]);
+    }
+
+    /**
+     * Processa os dados do formulário de criação de personagem.
+     * Lida com a requisição POST para /personagens/criar.
+     */
+    public function processarCriacao(): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit();
+        }
+
+        try {
+            $idUsuario = $_SESSION['user_id'];
+            $idSistema = filter_input(INPUT_POST, 'id_sistema', FILTER_VALIDATE_INT);
+
+            // O 'personagem' é um array que contém todos os campos da ficha.
+            $dadosFicha = $_POST['personagem'] ?? [];
+
+            if (!$idUsuario || !$idSistema || empty($dadosFicha)) {
+                throw new Exception("Dados inválidos para a criação do personagem.");
+            }
+
+            // Delega a lógica de negócio para o serviço de domínio.
+            $this->criarPersonagemService->executar($idUsuario, $idSistema, $dadosFicha);
+
+            // Sucesso: Redireciona para o painel de controlo.
+            $_SESSION['flash_message'] = ['type' => 'sucesso', 'message' => 'Personagem criado com sucesso!'];
+            header('Location: /dashboard');
+            exit();
+
+        } catch (Exception $e) {
+            // Em caso de erro, exibe o formulário novamente com a mensagem de erro.
+            $sistemas = $this->sistemaRPGRepository->buscarTodos();
+            $this->renderView('personagens/criar', [
+                'sistemas' => $sistemas,
+                'sistemaSelecionado' => null,
+                'ficha' => null,
+                'erro' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Método auxiliar para renderizar uma View.
+     */
+    private function renderView(string $viewName, array $data = []): void
+    {
+        if (!empty($data)) {
+            extract($data);
+        }
+        require __DIR__ . '/../Views/' . $viewName . '.phtml';
+    }
+}

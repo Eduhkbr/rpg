@@ -54,15 +54,7 @@ class MySQLSalaRepository implements SalaRepositoryInterface
             $this->conexao->commit();
 
             // 5. Retorna um novo objeto Sala, agora com o ID que foi gerado pelo banco.
-            return new Sala(
-                $sala->idMestre,
-                $sala->idSistema,
-                $sala->nomeSala,
-                $sala->codigoConvite,
-                $idNovaSala,
-                $sala->ativa,
-                $sala->dataCriacao
-            );
+            return $this->mapearDadosParaSala(['id' => $idNovaSala] + (array)$sala);
 
         } catch (PDOException $e) {
             // 6. Se algo deu errado, desfaz todas as operações da transação.

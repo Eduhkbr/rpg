@@ -2,6 +2,7 @@
 
 namespace App\Application\Controllers;
 
+use App\Domain\Repositories\PersonagemRepositoryInterface;
 use App\Domain\Repositories\SalaRepositoryInterface;
 use App\Domain\Services\CadastroService;
 use App\Domain\Services\VerificacaoEmailService;
@@ -24,6 +25,7 @@ class UsuarioController
     private VerificacaoEmailService $verificacaoEmailService;
     private LoginService $loginService;
     private SalaRepositoryInterface $salaRepository;
+    private PersonagemRepositoryInterface $personagemRepository;
 
     /**
      * O construtor recebe as dependências necessárias
@@ -32,17 +34,20 @@ class UsuarioController
      * @param VerificacaoEmailService $verificacaoEmailService
      * @param LoginService $loginService
      * @param SalaRepositoryInterface $salaRepository
+     * @param PersonagemRepositoryInterface $personagemRepository
      */
     public function __construct(
         CadastroService $cadastroService,
         VerificacaoEmailService $verificacaoEmailService,
         LoginService $loginService,
-        SalaRepositoryInterface $salaRepository
+        SalaRepositoryInterface $salaRepository,
+        PersonagemRepositoryInterface $personagemRepository
     ) {
         $this->cadastroService = $cadastroService;
         $this->verificacaoEmailService = $verificacaoEmailService;
         $this->loginService = $loginService;
         $this->salaRepository = $salaRepository;
+        $this->personagemRepository = $personagemRepository;
     }
 
     /**
@@ -212,9 +217,13 @@ class UsuarioController
         // Busca as salas em que o utilizador participa.
         $idUsuario = $_SESSION['user_id'];
         $salas = $this->salaRepository->buscarPorUsuarioId($idUsuario);
+        $personagens = $this->personagemRepository->buscarPorUsuarioId($idUsuario);
 
         // Renderiza a view do painel, passando a lista de salas para ela.
-        $this->renderView('usuarios/dashboard', ['salas' => $salas]);
+        $this->renderView('usuarios/dashboard', [
+            'salas' => $salas,
+            'personagens' => $personagens
+        ]);
     }
 
     /**

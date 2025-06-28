@@ -81,6 +81,7 @@ $usuarioRepository = new App\Infrastructure\Persistence\MySQLUsuarioRepository($
 $emailService = new App\Infrastructure\Notification\PHPMailerAdapter($emailConfig);
 $sistemaRPGRepository = new App\Infrastructure\Persistence\MySQLSistemaRPGRepository($pdo);
 $salaRepository = new App\Infrastructure\Persistence\MySQLSalaRepository($pdo);
+$personagemRepository = new App\Infrastructure\Persistence\MySQLPersonagemRepository($pdo);
 
 // Camada de Domínio (Serviços)
 $cadastroService = new App\Domain\Services\CadastroService($usuarioRepository, $emailService);
@@ -88,10 +89,12 @@ $verificacaoEmailService = new App\Domain\Services\VerificacaoEmailService($usua
 $loginService = new App\Domain\Services\LoginService($usuarioRepository);
 $criarSalaService = new App\Domain\Services\CriarSalaService($salaRepository, $usuarioRepository);
 $entrarSalaService = new App\Domain\Services\EntrarSalaService($salaRepository);
+$criarPersonagemService = new App\Domain\Services\CriarPersonagemService($personagemRepository);
 
 // Camada de Aplicação (Controllers)
-$usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService, $salaRepository);
+$usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService, $salaRepository, $personagemRepository);
 $salaController = new App\Application\Controllers\SalaController($criarSalaService, $entrarSalaService, $sistemaRPGRepository);
+$personagemController = new App\Application\Controllers\PersonagemController($criarPersonagemService, $sistemaRPGRepository); // <-- NOVO
 
 
 // --- 4. Definição das Rotas (ATUALIZADO) ---
@@ -117,6 +120,10 @@ $router->post('/verificar', [$usuarioController, 'processarVerificacao']);
 $router->get('/salas/criar', [$salaController, 'exibirFormularioCriacao']);
 $router->post('/salas/criar', [$salaController, 'processarCriacao']);
 $router->post('/salas/entrar', [$salaController, 'processarEntrada']);
+
+// Rotas de personagens
+$router->get('/personagens/criar', [$personagemController, 'exibirFormularioCriacao']);
+$router->post('/personagens/criar', [$personagemController, 'processarCriacao']);
 
 // --- 5. Iniciar a Aplicação ---
 $router->dispatch();
