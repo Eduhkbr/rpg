@@ -220,14 +220,13 @@ class MySQLSalaRepository implements SalaRepositoryInterface
      */
     private function mapearDadosParaSala(array $dados): Sala
     {
-        return new Sala(
-            $dados['id_mestre'],
-            $dados['id_sistema'],
-            $dados['nome_sala'],
-            $dados['codigo_convite'],
-            $dados['id'],
-            (bool)$dados['ativa'],
-            $dados['data_criacao']
-        );
+        $idMestre = isset($dados['id_mestre']) && $dados['id_mestre'] !== null ? (int)$dados['id_mestre'] : 0;
+        $idSistema = isset($dados['id_sistema']) && $dados['id_sistema'] !== null ? (int)$dados['id_sistema'] : 0;
+        $nomeSala = isset($dados['nome_sala']) ? $dados['nome_sala'] : '';
+        $codigoConvite = isset($dados['codigo_convite']) ? $dados['codigo_convite'] : '';
+        $id = isset($dados['id']) ? (int)$dados['id'] : null;
+        $ativa = isset($dados['ativa']) ? (bool)$dados['ativa'] : true;
+        $dataCriacao = isset($dados['data_criacao']) ? $dados['data_criacao'] : null;
+        return new Sala($idMestre, $idSistema, $nomeSala, $codigoConvite, $id, $ativa, $dataCriacao);
     }
 }
