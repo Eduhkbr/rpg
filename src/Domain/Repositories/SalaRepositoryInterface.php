@@ -22,7 +22,8 @@ interface SalaRepositoryInterface
      * Busca todas as salas em que um determinado utilizador participa.
      *
      * @param int $idUsuario O ID do utilizador.
-     * @return array Uma lista de objetos Sala.
+     * @return array Uma lista de arrays, cada um contendo o objeto 'sala',
+     * o 'nomeSistema' e a 'quantidadeJogadores'.
      */
     public function buscarPorUsuarioId(int $idUsuario): array;
 

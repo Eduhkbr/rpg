@@ -77,10 +77,17 @@ class MySQLSalaRepository implements SalaRepositoryInterface
      */
     public function buscarPorUsuarioId(int $idUsuario): array
     {
-        // Esta query junta as tabelas `salas` e `participantes` para encontrar
-        // todas as salas (s) associadas a um id de utilizador (p).
-        $sql = "SELECT s.* FROM salas s
+        // Esta query foi reescrita para ser mais poderosa:
+        // 1. Junta `salas` (s) com `participantes` (p) para filtrar pelo utilizador.
+        // 2. Junta o resultado com `sistemas_rpg` (sr) para obter o nome do sistema.
+        // 3. Usa uma subquery para contar o total de participantes para cada sala.
+        $sql = "SELECT 
+                    s.*, 
+                    sr.nome_sistema,
+                    (SELECT COUNT(*) FROM participantes p2 WHERE p2.id_sala = s.id) AS quantidade_jogadores
+                FROM salas s
                 JOIN participantes p ON s.id = p.id_sala
+                JOIN sistemas_rpg sr ON s.id_sistema = sr.id
                 WHERE p.id_usuario = :id_usuario
                 ORDER BY s.data_criacao DESC;";
 
@@ -91,16 +98,21 @@ class MySQLSalaRepository implements SalaRepositoryInterface
 
             $salasDados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $salas = [];
+            $salasInfo = [];
             foreach ($salasDados as $dados) {
-                // Reutiliza o método de mapeamento para criar cada objeto Sala.
-                $salas[] = $this->mapearDadosParaSala($dados);
+                // Para cada linha do resultado, criamos uma estrutura que contém
+                // o objeto Sala e os dados extras que a View precisa.
+                $salasInfo[] = [
+                    'sala' => $this->mapearDadosParaSala($dados),
+                    'nomeSistema' => $dados['nome_sistema'],
+                    'quantidadeJogadores' => $dados['quantidade_jogadores']
+                ];
             }
-            return $salas;
+            return $salasInfo;
 
         } catch (PDOException $e) {
             error_log("Erro no Repositório de Sala (buscarPorUsuarioId): " . $e->getMessage());
-            return []; // Retorna um array vazio em caso de erro.
+            return [];
         }
     }
 
