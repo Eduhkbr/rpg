@@ -4,8 +4,11 @@ namespace App\Application\Controllers;
 
 use App\Domain\Services\CadastroService;
 use App\Domain\Services\VerificacaoEmailService;
+use App\Domain\Services\LoginService;
 use App\Domain\Exceptions\EmailJaExisteException;
 use App\Domain\Exceptions\CodigoInvalidoException;
+use App\Domain\Exceptions\CredenciaisInvalidasException;
+use App\Domain\Exceptions\EmailNaoVerificadoException;
 use Exception;
 
 /**
@@ -18,19 +21,23 @@ class UsuarioController
 {
     private CadastroService $cadastroService;
     private VerificacaoEmailService $verificacaoEmailService;
+    private LoginService $loginService;
 
     /**
      * O construtor recebe as dependências necessárias
      *
      * @param CadastroService $cadastroService
      * @param VerificacaoEmailService $verificacaoEmailService
+     * @param LoginService $loginService
      */
     public function __construct(
         CadastroService $cadastroService,
-        VerificacaoEmailService $verificacaoEmailService
+        VerificacaoEmailService $verificacaoEmailService,
+        LoginService $loginService
     ) {
         $this->cadastroService = $cadastroService;
         $this->verificacaoEmailService = $verificacaoEmailService;
+        $this->loginService = $loginService;
     }
 
     /**
@@ -90,19 +97,13 @@ class UsuarioController
     /**
      * Exibe a página de sucesso após o cadastro.
      */
-    public function exibirCadastroSucesso(): void
-    {
-        $this->renderView('usuarios/sucesso');
-    }
+    public function exibirCadastroSucesso(): void { $this->renderView('usuarios/sucesso'); }
 
     /**
      * Exibe o formulário para o utilizador inserir o código de verificação.
      * Lida com a requisição GET para /verificar.
      */
-    public function exibirFormularioVerificacao(): void
-    {
-        $this->renderView('usuarios/verificar');
-    }
+    public function exibirFormularioVerificacao(): void { $this->renderView('usuarios/verificar'); }
 
     /**
      * Processa o código de verificação submetido pelo utilizador.
@@ -128,14 +129,10 @@ class UsuarioController
 
         } catch (CodigoInvalidoException $e) {
             // 4. Falha Específica: Código inválido. Renderiza o formulário novamente com o erro.
-            $this->renderView('usuarios/verificar', [
-                'erro' => $e->getMessage()
-            ]);
+            $this->renderView('usuarios/verificar', ['erro' => $e->getMessage()]);
         } catch (Exception $e) {
             // 5. Falha Genérica: Outro erro inesperado.
-            $this->renderView('usuarios/verificar', [
-                'erro' => 'Ocorreu um erro inesperado ao verificar o seu código.'
-            ]);
+            $this->renderView('usuarios/verificar', ['erro' => 'Ocorreu um erro inesperado.']);
         }
     }
 
@@ -157,6 +154,74 @@ class UsuarioController
         $this->renderView('usuarios/login', [
             'flash_message' => $flash_message
         ]);
+    }
+
+    /**
+     * Processa os dados do formulário de login.
+     * Lida com a requisição POST para /login.
+     */
+    public function processarLogin(): void
+    {
+        $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+        $senha = $_POST['senha'] ?? '';
+
+        try {
+            // 1. Delega a lógica para o Serviço de Domínio.
+            $usuario = $this->loginService->executar($email, $senha);
+
+            // 2. Sucesso: Regenera o ID da sessão e armazena o ID do utilizador.
+            // Isto é uma boa prática de segurança para prevenir "session fixation".
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $usuario->getId();
+
+            // 3. Redireciona para o painel de controlo.
+            header('Location: /dashboard');
+            exit();
+
+        } catch (CredenciaisInvalidasException | EmailNaoVerificadoException $e) {
+            // 4. Falha Específica: Trata os erros de login conhecidos.
+            $this->renderView('usuarios/login', [
+                'erro' => $e->getMessage(),
+                'email' => $email
+            ]);
+        } catch (Exception $e) {
+            // 5. Falha Genérica: Trata qualquer outro erro inesperado.
+            $this->renderView('usuarios/login', [
+                'erro' => 'Ocorreu um erro inesperado. Por favor, tente novamente.'
+            ]);
+        }
+    }
+
+    /**
+     * Exibe o painel principal do utilizador (página protegida).
+     * Lida com a requisição GET para /dashboard.
+     */
+    public function exibirDashboard(): void
+    {
+        // Controlo de Acesso: Verifica se o utilizador está logado.
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit();
+        }
+        // Por enquanto, apenas renderiza uma view simples.
+        $this->renderView('usuarios/dashboard');
+    }
+
+    /**
+     * Encerra a sessão do utilizador (logout).
+     * Lida com a requisição GET para /logout.
+     */
+    public function logout(): void
+    {
+        // Limpa todas as variáveis da sessão.
+        $_SESSION = [];
+
+        // Destrói a sessão.
+        session_destroy();
+
+        // Redireciona para a página de login.
+        header('Location: /login');
+        exit();
     }
 
     /**

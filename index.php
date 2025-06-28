@@ -83,34 +83,29 @@ $emailService = new App\Infrastructure\Notification\PHPMailerAdapter($emailConfi
 // Camada de Domínio (Serviços)
 $cadastroService = new App\Domain\Services\CadastroService($usuarioRepository, $emailService);
 $verificacaoEmailService = new App\Domain\Services\VerificacaoEmailService($usuarioRepository);
+$loginService = new App\Domain\Services\LoginService($usuarioRepository); // <-- NOVO SERVIÇO MONTADO
 
 // Camada de Aplicação (Controllers)
 $usuarioController = new App\Application\Controllers\UsuarioController(
     $cadastroService,
-    $verificacaoEmailService
+    $verificacaoEmailService,
+    $loginService
 );
 
 
-// --- 4. Definição das Rotas ---
-// Cria uma instância do roteador e define as rotas da aplicação.
+// --- 4. Definição das Rotas (ATUALIZADO) ---
 $router = new App\Application\Router();
 
-// Rota para a página inicial, redirecionando para o cadastro.
-$router->get('/', function() {
-    header('Location: /cadastro');
-    exit();
-});
-
-
+// Rotas Principais e de Sessão
+$router->get('/', function() { header('Location: /login'); exit(); }); // <-- Rota raiz agora vai para o login
 $router->get('/login', [$usuarioController, 'exibirFormularioLogin']);
+$router->post('/login', [$usuarioController, 'processarLogin']); // <-- NOVA ROTA
+$router->get('/logout', [$usuarioController, 'logout']); // <-- NOVA ROTA
+$router->get('/dashboard', [$usuarioController, 'exibirDashboard']); // <-- NOVA ROTA
 
-// Rota para exibir o formulário de cadastro.
+// Rotas de Cadastro
 $router->get('/cadastro', [$usuarioController, 'exibirFormularioCadastro']);
-
-// Rota para processar os dados do formulário de cadastro.
 $router->post('/cadastro', [$usuarioController, 'processarCadastro']);
-
-// Rota para a página de sucesso após o cadastro.
 $router->get('/cadastro/sucesso', [$usuarioController, 'exibirCadastroSucesso']);
 
 // Rotas de Verificação
@@ -118,8 +113,6 @@ $router->get('/verificar', [$usuarioController, 'exibirFormularioVerificacao']);
 $router->post('/verificar', [$usuarioController, 'processarVerificacao']);
 
 // --- 5. Iniciar a Aplicação ---
-// O roteador irá analisar a URL da requisição e chamar o método correto do controller.
 $router->dispatch();
 
-// Envia todo o conteúdo do buffer de saída para o navegador e desliga o buffer.
 ob_end_flush();

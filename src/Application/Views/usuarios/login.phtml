@@ -33,19 +33,29 @@
         <p class="text-gray-400">Bem-vindo de volta, sobrevivente.</p>
     </header>
 
-    <?php if (isset($flash_message)): ?>
-        <!-- Bloco de Mensagem Flash (Sucesso ou Erro) -->
-        <div class="bg-<?php echo $flash_message['type'] === 'sucesso' ? 'green' : 'red'; ?>-900/50 border border-<?php echo $flash_message['type'] === 'sucesso' ? 'green' : 'red'; ?>-500 text-<?php echo $flash_message['type'] === 'sucesso' ? 'green' : 'red'; ?>-300 p-3 rounded-lg mb-6 text-center">
-            <p><?php echo htmlspecialchars($flash_message['message']); ?></p>
+    <!-- Bloco de Mensagem Flash (Sucesso) ou Erro de Login -->
+    <?php
+    // Prioriza a exibição de um erro de login sobre uma mensagem flash.
+    $mensagem_a_exibir = null;
+    if (isset($erro)) {
+        $mensagem_a_exibir = ['type' => 'erro', 'message' => $erro];
+    } elseif (isset($flash_message)) {
+        $mensagem_a_exibir = $flash_message;
+    }
+    ?>
+
+    <?php if (isset($mensagem_a_exibir)): ?>
+        <div class="bg-<?php echo $mensagem_a_exibir['type'] === 'sucesso' ? 'green' : 'red'; ?>-900/50 border border-<?php echo $mensagem_a_exibir['type'] === 'sucesso' ? 'green' : 'red'; ?>-500 text-<?php echo $mensagem_a_exibir['type'] === 'sucesso' ? 'green' : 'red'; ?>-300 p-3 rounded-lg mb-6 text-center font-bold">
+            <p><?php echo htmlspecialchars($mensagem_a_exibir['message']); ?></p>
         </div>
     <?php endif; ?>
 
-    <!-- Formulário de Login (ainda não funcional) -->
+    <!-- Formulário de Login -->
     <form action="/login" method="POST">
         <div class="space-y-6">
             <div>
-                <label for="email" class="block text-sm font-bold text-gray-400 mb-2">E-mail ou Nome de Utilizador</label>
-                <input type="text" id="email" name="email" class="w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all" required>
+                <label for="email" class="block text-sm font-bold text-gray-400 mb-2">E-mail</label>
+                <input type="email" id="email" name="email" class="w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all" value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" required>
             </div>
             <div>
                 <label for="senha" class="block text-sm font-bold text-gray-400 mb-2">Senha</label>
@@ -59,6 +69,10 @@
             </button>
         </div>
     </form>
+
+    <div class="text-center mt-6">
+        <a href="/cadastro" class="text-sm text-gray-400 hover:text-white hover:underline">Ainda não tem uma conta? Crie uma aqui.</a>
+    </div>
 </div>
 
 </body>
