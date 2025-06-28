@@ -25,4 +25,23 @@ interface SalaRepositoryInterface
      * @return array Uma lista de objetos Sala.
      */
     public function buscarPorUsuarioId(int $idUsuario): array;
+
+    /**
+     * Busca uma sala pelo seu código de convite.
+     * @param string código do convite
+     */
+    public function buscarPorCodigoConvite(string $codigo): ?Sala;
+
+    /**
+     * Conta quantos participantes uma sala possui.
+     * @param int $idSala O ID da sala.
+     */
+    public function contarParticipantes(int $idSala): int;
+
+    /**
+     * Adiciona um novo utilizador à lista de participantes de uma sala.
+     * @param int $idSala O ID da sala.
+     * @param int $idUsuario O ID do utilizador.
+     */
+    public function adicionarParticipante(int $idSala, int $idUsuario): bool;
 }

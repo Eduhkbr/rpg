@@ -86,11 +86,12 @@ $salaRepository = new App\Infrastructure\Persistence\MySQLSalaRepository($pdo);
 $cadastroService = new App\Domain\Services\CadastroService($usuarioRepository, $emailService);
 $verificacaoEmailService = new App\Domain\Services\VerificacaoEmailService($usuarioRepository);
 $loginService = new App\Domain\Services\LoginService($usuarioRepository);
-$criarSalaService = new App\Domain\Services\CriarSalaService($salaRepository, $usuarioRepository); // <-- NOVO
+$criarSalaService = new App\Domain\Services\CriarSalaService($salaRepository, $usuarioRepository);
+$entrarSalaService = new App\Domain\Services\EntrarSalaService($salaRepository);
 
 // Camada de Aplicação (Controllers)
 $usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService, $salaRepository);
-$salaController = new App\Application\Controllers\SalaController($criarSalaService, $sistemaRPGRepository); // <-- NOVO
+$salaController = new App\Application\Controllers\SalaController($criarSalaService, $entrarSalaService, $sistemaRPGRepository);
 
 
 // --- 4. Definição das Rotas (ATUALIZADO) ---
@@ -115,6 +116,7 @@ $router->post('/verificar', [$usuarioController, 'processarVerificacao']);
 // Rotas de salas
 $router->get('/salas/criar', [$salaController, 'exibirFormularioCriacao']);
 $router->post('/salas/criar', [$salaController, 'processarCriacao']);
+$router->post('/salas/entrar', [$salaController, 'processarEntrada']);
 
 // --- 5. Iniciar a Aplicação ---
 $router->dispatch();

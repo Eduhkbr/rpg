@@ -104,6 +104,59 @@ class MySQLSalaRepository implements SalaRepositoryInterface
         }
     }
 
+
+    /**
+     * {@inheritdoc}
+     */
+    public function buscarPorCodigoConvite(string $codigo): ?Sala
+    {
+        $sql = "SELECT * FROM salas WHERE codigo_convite = :codigo LIMIT 1;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':codigo', $codigo);
+            $stmt->execute();
+            $dados = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $dados ? $this->mapearDadosParaSala($dados) : null;
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (buscarPorCodigoConvite): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function contarParticipantes(int $idSala): int
+    {
+        $sql = "SELECT COUNT(*) FROM participantes WHERE id_sala = :id_sala;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id_sala', $idSala, PDO::PARAM_INT);
+            $stmt->execute();
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (contarParticipantes): " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function adicionarParticipante(int $idSala, int $idUsuario): bool
+    {
+        $sql = "INSERT INTO participantes (id_sala, id_usuario) VALUES (:id_sala, :id_usuario);";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id_sala', $idSala, PDO::PARAM_INT);
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (adicionarParticipante): " . $e->getMessage());
+            return false;
+        }
+    }
+
     /**
      * Método auxiliar para mapear um array de dados do banco para um objeto Sala.
      * Evita a repetição de código.

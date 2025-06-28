@@ -3,7 +3,12 @@
 namespace App\Application\Controllers;
 
 use App\Domain\Services\CriarSalaService;
+use App\Domain\Services\EntrarSalaService;
 use App\Domain\Repositories\SistemaRPGRepositoryInterface;
+use App\Domain\Exceptions\SalaNaoEncontradaException;
+use App\Domain\Exceptions\SalaCheiaException;
+use App\Domain\Exceptions\UtilizadorJaParticipaException;
+use App\Domain\Exceptions\LimiteDeSalasAtingidoException;
 use Exception;
 
 /**
@@ -14,13 +19,16 @@ use Exception;
 class SalaController
 {
     private CriarSalaService $criarSalaService;
+    private EntrarSalaService $entrarSalaService;
     private SistemaRPGRepositoryInterface $sistemaRPGRepository;
 
     public function __construct(
         CriarSalaService $criarSalaService,
+        EntrarSalaService $entrarSalaService,
         SistemaRPGRepositoryInterface $sistemaRPGRepository
     ) {
         $this->criarSalaService = $criarSalaService;
+        $this->entrarSalaService = $entrarSalaService;
         $this->sistemaRPGRepository = $sistemaRPGRepository;
     }
 
@@ -77,6 +85,41 @@ class SalaController
                 'sistemas' => $sistemas,
                 'erro' => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Processa o código de convite para entrar numa sala.
+     * Lida com a requisição POST para /salas/entrar.
+     */
+    public function processarEntrada(): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit();
+        }
+
+        $idUsuario = $_SESSION['user_id'];
+        $codigoConvite = strtoupper(trim($_POST['codigo_convite'] ?? ''));
+
+        try {
+            // Delega a lógica de negócio para o serviço de domínio.
+            $this->entrarSalaService->executar($idUsuario, $codigoConvite);
+
+            // Sucesso: Redireciona para o painel de controlo, que agora mostrará a nova sala.
+            header('Location: /dashboard');
+            exit();
+
+        } catch (SalaNaoEncontradaException | SalaCheiaException | UtilizadorJaParticipaException | LimiteDeSalasAtingidoException $e) {
+            // Falha Específica: Guarda a mensagem de erro na sessão para exibi-la no painel.
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+            header('Location: /dashboard');
+            exit();
+        } catch (Exception $e) {
+            // Falha Genérica.
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => 'Ocorreu um erro inesperado ao tentar entrar na sala.'];
+            header('Location: /dashboard');
+            exit();
         }
     }
 
