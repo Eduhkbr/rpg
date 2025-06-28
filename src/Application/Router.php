@@ -54,35 +54,32 @@ class Router
     public function dispatch(): void
     {
         $method = $_SERVER['REQUEST_METHOD'];
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
+        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
 
-        if (strpos($uri, $this->basePath) === 0) {
-            $path = substr($uri, strlen($this->basePath));
-        } else {
-            $path = $uri;
-        }
+        foreach ($this->routes[$method] as $route => $handler) {
+            $pattern = preg_replace('/\{([a-zA-Z]+)\}/', '(?P<\1>[0-9]+)', $route);
+            $pattern = '#^' . $pattern . '$#';
 
-        $path = '/' . trim($path, '/');
-        if (empty($path)) {
-            $path = '/';
-        }
+            // Verifica se a URL atual corresponde ao padrão da rota.
+            if (preg_match($pattern, $path, $matches)) {
+                // Extrai os parâmetros da URL (ex: o 'id').
+                $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
 
-        $handler = $this->routes[$method][$path] ?? null;
-
-        if ($handler) {
-            // A mudança chave é verificar o tipo de handler antes de chamar.
-            if (is_array($handler)) {
-                // Formato: [$controller, 'methodName']
-                [$controller, $methodName] = $handler;
-                $controller->$methodName();
-            } else {
-                // É uma Closure, então a chamamos diretamente.
-                $handler();
+                if (is_array($handler)) {
+                    [$controller, $methodName] = $handler;
+                    // Chama o método do controller, passando os parâmetros da URL.
+                    $controller->$methodName(...$params);
+                } else {
+                    // Chama a Closure, passando os parâmetros.
+                    $handler(...$params);
+                }
+                return;
             }
-        } else {
-            http_response_code(404);
-            echo "<h1>404 - Página Não Encontrada</h1>";
-            echo "<p>O roteador não encontrou uma rota para o método <strong>{$method}</strong> e caminho <strong>'{$path}'</strong>.</p>";
         }
+
+        // Se nenhum loop encontrou uma rota correspondente.
+        http_response_code(404);
+        echo "<h1>404 - Página Não Encontrada</h1>";
+        echo "<p>O roteador não encontrou uma rota para o método <strong>{$method}</strong> e caminho <strong>'{$path}'</strong>.</p>";
     }
 }

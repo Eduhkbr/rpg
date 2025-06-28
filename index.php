@@ -94,7 +94,7 @@ $criarPersonagemService = new App\Domain\Services\CriarPersonagemService($person
 // Camada de Aplicação (Controllers)
 $usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService, $salaRepository, $personagemRepository);
 $salaController = new App\Application\Controllers\SalaController($criarSalaService, $entrarSalaService, $sistemaRPGRepository);
-$personagemController = new App\Application\Controllers\PersonagemController($criarPersonagemService, $sistemaRPGRepository); // <-- NOVO
+$personagemController = new App\Application\Controllers\PersonagemController($criarPersonagemService, $sistemaRPGRepository, $personagemRepository);
 
 
 // --- 4. Definição das Rotas (ATUALIZADO) ---
@@ -124,6 +124,7 @@ $router->post('/salas/entrar', [$salaController, 'processarEntrada']);
 // Rotas de personagens
 $router->get('/personagens/criar', [$personagemController, 'exibirFormularioCriacao']);
 $router->post('/personagens/criar', [$personagemController, 'processarCriacao']);
+$router->get('/personagens/ver/{id}', [$personagemController, 'exibirFicha']);
 
 // --- 5. Iniciar a Aplicação ---
 $router->dispatch();

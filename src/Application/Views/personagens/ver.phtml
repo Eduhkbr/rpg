@@ -1,0 +1,83 @@
+<?php
+/**
+ * Função auxiliar recursiva para RENDERIZAR os dados da ficha.
+ * Esta versão é para exibição, não para formulários.
+ */
+function renderFichaData(array $data): void
+{
+    $gridKeys = ['atributos', 'modificadores', 'vida', 'moedas', 'estado_mental', 'ferimentos'];
+
+    foreach ($data as $key => $value) {
+        $label = ucfirst(str_replace('_', ' ', $key));
+
+        // Ignora o nome do personagem, pois já é exibido no cabeçalho.
+        if ($key === 'nome_personagem') continue;
+
+        // Caso 1: É um objeto (array associativo)
+        if (is_array($value) && !empty($value) && array_keys($value) !== range(0, count($value) - 1)) {
+            if (in_array($key, $gridKeys)) {
+                echo "<fieldset class='border border-gray-700 p-4 rounded-lg mt-6 mb-4'><legend class='px-2 font-bold text-lg text-yellow-400'>{$label}</legend>";
+                echo "<div class='grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4'>";
+                renderFichaData($value);
+                echo "</div></fieldset>";
+            } else {
+                echo "<fieldset class='border border-gray-700 p-4 rounded-lg mt-6 mb-4'><legend class='px-2 font-bold text-lg text-yellow-400'>{$label}</legend>";
+                renderFichaData($value);
+                echo "</fieldset>";
+            }
+        }
+        // Caso 2: É uma lista (array indexado)
+        elseif (is_array($value)) {
+            echo "<div class='col-span-1 md:col-span-2 mt-4'><h4 class='block text-sm font-bold text-gray-400 mb-2'>{$label}</h4><ul class='list-disc list-inside pl-2 space-y-1 font-mono text-sm'>";
+            foreach($value as $item) {
+                echo "<li>" . htmlspecialchars($item) . "</li>";
+            }
+            echo "</ul></div>";
+        }
+        // Caso 3: É um valor simples
+        else {
+            $isLongText = strlen($value) > 80 || strpos($key, 'descricao') !== false || strpos($key, 'historia') !== false || strpos($key, 'notas') !== false;
+
+            if ($isLongText) {
+                echo "<div class='col-span-1 md:col-span-2 mt-4'><h4 class='block text-sm font-bold text-gray-400 mb-2'>{$label}</h4><p class='text-gray-300 whitespace-pre-wrap'>" . htmlspecialchars($value) . "</p></div>";
+            } else {
+                echo "<div><h4 class='block text-sm font-bold text-gray-400 mb-1'>{$label}</h4><p class='text-lg'>" . htmlspecialchars($value) . "</p></div>";
+            }
+        }
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de <?php echo htmlspecialchars($personagem->getNomePersonagem()); ?> - Central RPG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Oswald', sans-serif; background: linear-gradient(-45deg, #232526, #414345, #1a1a1a, #000000); background-size: 400% 400%; animation: gradientBG 25s ease infinite; }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .font-typewriter { font-family: 'Special Elite', cursive; }
+        .glass-card { background: rgba(10, 10, 10, 0.6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
+
+<div class="glass-card w-full max-w-4xl p-8 rounded-lg shadow-2xl shadow-black/50">
+    <header class="text-center mb-8 border-b border-gray-700 pb-6">
+        <h1 class="font-typewriter text-5xl font-bold text-green-400" style="text-shadow: 0 0 10px #2f855a;"><?php echo htmlspecialchars($personagem->getNomePersonagem()); ?></h1>
+        <a href="/dashboard" class="text-sm text-blue-400 hover:underline mt-4 inline-block">&larr; Voltar para o Painel</a>
+    </header>
+
+    <div>
+        <?php renderFichaData($ficha); ?>
+    </div>
+
+</div>
+
+</body>
+</html>

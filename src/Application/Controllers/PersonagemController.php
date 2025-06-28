@@ -2,6 +2,7 @@
 
 namespace App\Application\Controllers;
 
+use App\Domain\Repositories\PersonagemRepositoryInterface;
 use App\Domain\Services\CriarPersonagemService;
 use App\Domain\Repositories\SistemaRPGRepositoryInterface;
 use Exception;
@@ -15,13 +16,16 @@ class PersonagemController
 {
     private CriarPersonagemService $criarPersonagemService;
     private SistemaRPGRepositoryInterface $sistemaRPGRepository;
+    private PersonagemRepositoryInterface $personagemRepository;
 
     public function __construct(
         CriarPersonagemService $criarPersonagemService,
-        SistemaRPGRepositoryInterface $sistemaRPGRepository
+        SistemaRPGRepositoryInterface $sistemaRPGRepository,
+        PersonagemRepositoryInterface $personagemRepository
     ) {
         $this->criarPersonagemService = $criarPersonagemService;
         $this->sistemaRPGRepository = $sistemaRPGRepository;
+        $this->personagemRepository = $personagemRepository;
     }
 
     /**
@@ -101,6 +105,47 @@ class PersonagemController
                 'ficha' => null,
                 'erro' => $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Exibe a ficha de um personagem específico.
+     * Lida com a requisição GET para /personagens/ver/{id}.
+     *
+     * @param int $id O ID do personagem vindo da URL.
+     */
+    public function exibirFicha(int $id): void
+    {
+        // 1. Controlo de Acesso: Verifica se o utilizador está logado.
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit();
+        }
+
+        try {
+            // 2. Busca o personagem na base de dados.
+            $personagem = $this->personagemRepository->buscarPorId($id);
+
+            // 3. Verificação de Segurança e Existência:
+            // Garante que o personagem existe E que pertence ao utilizador logado.
+            if ($personagem === null || $personagem->getIdUsuario() !== $_SESSION['user_id']) {
+                // Se não, redireciona para o painel com uma mensagem de erro.
+                $_SESSION['flash_message'] = ['type' => 'erro', 'message' => 'Personagem não encontrado ou acesso não permitido.'];
+                header('Location: /dashboard');
+                exit();
+            }
+
+            // 4. Sucesso: Renderiza a view da ficha, passando os dados do personagem.
+            $this->renderView('personagens/ver', [
+                'personagem' => $personagem,
+                'ficha' => $personagem->getFichaComoArray() // Passa a ficha já descodificada
+            ]);
+
+        } catch (Exception $e) {
+            // Em caso de erro inesperado na base de dados.
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => 'Ocorreu um erro ao buscar os dados do personagem.'];
+            header('Location: /dashboard');
+            exit();
         }
     }
 

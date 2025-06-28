@@ -102,6 +102,25 @@ class MySQLPersonagemRepository implements PersonagemRepositoryInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function buscarPorId(int $id): ?Personagem
+    {
+        $sql = "SELECT * FROM personagens WHERE id = :id LIMIT 1;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $dados = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return $dados ? $this->mapearDadosParaPersonagem($dados) : null;
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Personagem (buscarPorId): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Método auxiliar para mapear um array de dados do banco para um objeto Personagem.
      */
     private function mapearDadosParaPersonagem(array $dados): Personagem

@@ -29,4 +29,12 @@ interface PersonagemRepositoryInterface
      * @return array Uma lista de objetos Personagem.
      */
     public function buscarPorUsuarioId(int $idUsuario): array;
+
+    /**
+     * Busca um personagem pelo seu ID único.
+     *
+     * @param int $id O ID do personagem.
+     * @return Personagem|null Retorna um objeto Personagem se encontrado, ou null caso contrário.
+     */
+    public function buscarPorId(int $id): ?Personagem;
 }
