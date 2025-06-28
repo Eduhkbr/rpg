@@ -71,4 +71,56 @@ class MySQLSalaRepository implements SalaRepositoryInterface
             return null; // Retorna null para indicar a falha.
         }
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function buscarPorUsuarioId(int $idUsuario): array
+    {
+        // Esta query junta as tabelas `salas` e `participantes` para encontrar
+        // todas as salas (s) associadas a um id de utilizador (p).
+        $sql = "SELECT s.* FROM salas s
+                JOIN participantes p ON s.id = p.id_sala
+                WHERE p.id_usuario = :id_usuario
+                ORDER BY s.data_criacao DESC;";
+
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $salasDados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $salas = [];
+            foreach ($salasDados as $dados) {
+                // Reutiliza o método de mapeamento para criar cada objeto Sala.
+                $salas[] = $this->mapearDadosParaSala($dados);
+            }
+            return $salas;
+
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (buscarPorUsuarioId): " . $e->getMessage());
+            return []; // Retorna um array vazio em caso de erro.
+        }
+    }
+
+    /**
+     * Método auxiliar para mapear um array de dados do banco para um objeto Sala.
+     * Evita a repetição de código.
+     *
+     * @param array $dados O array associativo vindo do fetch do PDO.
+     * @return Sala
+     */
+    private function mapearDadosParaSala(array $dados): Sala
+    {
+        return new Sala(
+            $dados['id_mestre'],
+            $dados['id_sistema'],
+            $dados['nome_sala'],
+            $dados['codigo_convite'],
+            $dados['id'],
+            (bool)$dados['ativa'],
+            $dados['data_criacao']
+        );
+    }
 }

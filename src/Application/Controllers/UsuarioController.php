@@ -2,6 +2,7 @@
 
 namespace App\Application\Controllers;
 
+use App\Domain\Repositories\SalaRepositoryInterface;
 use App\Domain\Services\CadastroService;
 use App\Domain\Services\VerificacaoEmailService;
 use App\Domain\Services\LoginService;
@@ -22,6 +23,7 @@ class UsuarioController
     private CadastroService $cadastroService;
     private VerificacaoEmailService $verificacaoEmailService;
     private LoginService $loginService;
+    private SalaRepositoryInterface $salaRepository;
 
     /**
      * O construtor recebe as dependências necessárias
@@ -29,15 +31,18 @@ class UsuarioController
      * @param CadastroService $cadastroService
      * @param VerificacaoEmailService $verificacaoEmailService
      * @param LoginService $loginService
+     * @param SalaRepositoryInterface $salaRepository
      */
     public function __construct(
         CadastroService $cadastroService,
         VerificacaoEmailService $verificacaoEmailService,
-        LoginService $loginService
+        LoginService $loginService,
+        SalaRepositoryInterface $salaRepository
     ) {
         $this->cadastroService = $cadastroService;
         $this->verificacaoEmailService = $verificacaoEmailService;
         $this->loginService = $loginService;
+        $this->salaRepository = $salaRepository;
     }
 
     /**
@@ -203,8 +208,13 @@ class UsuarioController
             header('Location: /login');
             exit();
         }
-        // Por enquanto, apenas renderiza uma view simples.
-        $this->renderView('usuarios/dashboard');
+
+        // Busca as salas em que o utilizador participa.
+        $idUsuario = $_SESSION['user_id'];
+        $salas = $this->salaRepository->buscarPorUsuarioId($idUsuario);
+
+        // Renderiza a view do painel, passando a lista de salas para ela.
+        $this->renderView('usuarios/dashboard', ['salas' => $salas]);
     }
 
     /**

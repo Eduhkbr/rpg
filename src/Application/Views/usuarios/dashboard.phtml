@@ -42,8 +42,24 @@
 
     <main>
         <h2 class="text-2xl font-bold text-yellow-400 mb-4">As Suas Salas de Jogo</h2>
-        <div class="p-6 bg-black/20 rounded-lg text-center text-gray-400">
-            <p>(Em breve: aqui aparecerá a lista das suas salas de jogo.)</p>
+        <div class="p-4 bg-black/20 rounded-lg">
+            <?php if (empty($salas)): ?>
+                <p class="text-center text-gray-400">Ainda não participa em nenhuma sala.</p>
+            <?php else: ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <?php foreach ($salas as $sala): ?>
+                        <div class="bg-gray-800/50 p-4 rounded-lg flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-lg text-white truncate"><?php echo htmlspecialchars($sala->nomeSala); ?></h3>
+                                <p class="text-sm text-gray-400">Código: <span class="font-mono bg-gray-900 px-2 py-1 rounded"><?php echo htmlspecialchars($sala->codigoConvite); ?></span></p>
+                            </div>
+                            <a href="/sala/<?php echo $sala->id; ?>" class="mt-4 block text-center bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-2 px-3 rounded-lg transition-colors">
+                                Entrar na Sala
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
 
         <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">

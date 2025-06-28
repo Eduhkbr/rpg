@@ -89,7 +89,7 @@ $loginService = new App\Domain\Services\LoginService($usuarioRepository);
 $criarSalaService = new App\Domain\Services\CriarSalaService($salaRepository, $usuarioRepository); // <-- NOVO
 
 // Camada de Aplicação (Controllers)
-$usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService);
+$usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService, $salaRepository);
 $salaController = new App\Application\Controllers\SalaController($criarSalaService, $sistemaRPGRepository); // <-- NOVO
 
 

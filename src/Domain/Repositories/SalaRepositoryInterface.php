@@ -17,4 +17,12 @@ interface SalaRepositoryInterface
      * @return Sala|null Retorna o objeto Sala com o ID preenchido em caso de sucesso, ou null em caso de falha.
      */
     public function salvar(Sala $sala): ?Sala;
+
+    /**
+     * Busca todas as salas em que um determinado utilizador participa.
+     *
+     * @param int $idUsuario O ID do utilizador.
+     * @return array Uma lista de objetos Sala.
+     */
+    public function buscarPorUsuarioId(int $idUsuario): array;
 }
