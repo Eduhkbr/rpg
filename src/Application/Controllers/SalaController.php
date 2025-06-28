@@ -4,11 +4,16 @@ namespace App\Application\Controllers;
 
 use App\Domain\Services\CriarSalaService;
 use App\Domain\Services\EntrarSalaService;
+use App\Domain\Services\EditarSalaService;
+use App\Domain\Services\DeletarSalaService;
 use App\Domain\Repositories\SistemaRPGRepositoryInterface;
 use App\Domain\Exceptions\SalaNaoEncontradaException;
 use App\Domain\Exceptions\SalaCheiaException;
 use App\Domain\Exceptions\UtilizadorJaParticipaException;
 use App\Domain\Exceptions\LimiteDeSalasAtingidoException;
+use App\Domain\Repositories\SalaRepositoryInterface;
+use App\Domain\Exceptions\AcessoNegadoException;
+use App\Domain\Services\SairSalaService;
 use Exception;
 
 /**
@@ -20,16 +25,28 @@ class SalaController
 {
     private CriarSalaService $criarSalaService;
     private EntrarSalaService $entrarSalaService;
+    private EditarSalaService $editarSalaService;
+    private DeletarSalaService $deletarSalaService;
+    private SairSalaService $sairSalaService;
     private SistemaRPGRepositoryInterface $sistemaRPGRepository;
+    private SalaRepositoryInterface $salaRepository;
 
     public function __construct(
         CriarSalaService $criarSalaService,
         EntrarSalaService $entrarSalaService,
-        SistemaRPGRepositoryInterface $sistemaRPGRepository
+        EditarSalaService $editarSalaService,
+        DeletarSalaService $deletarSalaService,
+        SairSalaService $sairSalaService,
+        SistemaRPGRepositoryInterface $sistemaRPGRepository,
+        SalaRepositoryInterface $salaRepository
     ) {
         $this->criarSalaService = $criarSalaService;
         $this->entrarSalaService = $entrarSalaService;
+        $this->editarSalaService = $editarSalaService;
+        $this->deletarSalaService = $deletarSalaService;
+        $this->sairSalaService = $sairSalaService;
         $this->sistemaRPGRepository = $sistemaRPGRepository;
+        $this->salaRepository = $salaRepository;
     }
 
     /**
@@ -63,7 +80,7 @@ class SalaController
 
         $idMestre = $_SESSION['user_id'];
         $idSistema = filter_input(INPUT_POST, 'id_sistema', FILTER_VALIDATE_INT);
-        $nomeSala = filter_input(INPUT_POST, 'nome_sala', FILTER_SANITIZE_STRING);
+        $nomeSala = filter_input(INPUT_POST, 'nome_sala', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         try {
             if (!$idSistema || !$nomeSala) {
@@ -121,6 +138,87 @@ class SalaController
             header('Location: /dashboard');
             exit();
         }
+    }
+
+    /*
+     * Exibe o formulário para a edição de uma sala.
+     * Lida com a requisição GET para /salas/editar/{id}
+     */
+    public function exibirFormularioEdicao(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit(); }
+
+        try {
+            $sala = $this->salaRepository->buscarPorId($id);
+            if ($sala === null || $sala->idMestre !== $_SESSION['user_id']) {
+                throw new AcessoNegadoException("Acesso negado ou sala não encontrada.");
+            }
+            $this->renderView('salas/editar', ['sala' => $sala]);
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+            header('Location: /dashboard');
+            exit();
+        }
+    }
+
+    /**
+     * Processa os dados do formulário de edição de sala.
+     * Lida com a requisição POST para /salas/editar/{id}.
+     *
+     * @param int $id O ID da sala a ser editada.
+     */
+    public function processarEdicao(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit(); }
+
+        try {
+            $novoNome = filter_input(INPUT_POST, 'nome_sala', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $this->editarSalaService->executar($id, $_SESSION['user_id'], $novoNome);
+            $_SESSION['flash_message'] = ['type' => 'sucesso', 'message' => 'Sala atualizada com sucesso!'];
+            header('Location: /dashboard');
+            exit();
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+            header("Location: /salas/editar/{$id}");
+            exit();
+        }
+    }
+
+    /**
+     * Processa o pedido de exclusão de uma sala.
+     * Lida com a requisição POST para /salas/deletar/{id}.
+     *
+     * @param int $id O ID da sala a ser excluída.
+     */
+    public function processarDelecao(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit(); }
+
+        try {
+            $this->deletarSalaService->executar($id, $_SESSION['user_id']);
+            $_SESSION['flash_message'] = ['type' => 'sucesso', 'message' => 'Sala excluída com sucesso.'];
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+        }
+        header('Location: /dashboard');
+        exit();
+    }
+
+    /**
+     * Processa o pedido de saida de uma sala.
+     */
+    public function processarSaida(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit(); }
+
+        try {
+            $this->sairSalaService->executar($id, $_SESSION['user_id']);
+            $_SESSION['flash_message'] = ['type' => 'sucesso', 'message' => 'Você saiu da sala.'];
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+        }
+        header('Location: /dashboard');
+        exit();
     }
 
     /**

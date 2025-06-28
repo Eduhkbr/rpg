@@ -28,6 +28,14 @@ interface SalaRepositoryInterface
     public function buscarPorUsuarioId(int $idUsuario): array;
 
     /**
+     * Busca uma sala pelo seu ID único.
+     *
+     * @param int $idSala O ID da sala.
+     * @return Sala|null Retorna um objeto Sala se encontrado, ou null caso contrário.
+     */
+    public function buscarPorId(int $idSala): ?Sala;
+
+    /**
      * Busca uma sala pelo seu código de convite.
      * @param string código do convite
      */
@@ -45,4 +53,21 @@ interface SalaRepositoryInterface
      * @param int $idUsuario O ID do utilizador.
      */
     public function adicionarParticipante(int $idSala, int $idUsuario): bool;
+
+    /**
+     * Remove um utilizador da lista de participantes de uma sala.
+     *
+     * @param int $idSala O ID da sala da qual o utilizador irá sair.
+     * @param int $idUsuario O ID do utilizador a ser removido.
+     * @return bool Retorna true em caso de sucesso, false em caso de falha.
+     */
+    public function removerParticipante(int $idSala, int $idUsuario): bool;
+
+    /**
+     * Deleta uma sala da fonte de dados pelo seu ID.
+     *
+     * @param int $idSala O ID da sala a ser deletada.
+     * @return bool Retorna true em caso de sucesso, false em caso de falha.
+     */
+    public function deletar(int $idSala): bool;
 }

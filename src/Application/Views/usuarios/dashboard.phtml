@@ -59,8 +59,8 @@
                     <?php foreach ($salas as $infoSala): ?>
                         <div class="bg-gray-800/50 p-4 rounded-lg flex flex-col justify-between hover:bg-gray-800/80 transition-colors">
                             <div class="flex-grow">
-                                <h3 class="font-bold text-lg text-white truncate" title="<?php echo htmlspecialchars($infoSala['sala']->nomeSala); ?>">
-                                    <?php echo htmlspecialchars($infoSala['sala']->nomeSala); ?>
+                                <h3 class="font-bold text-lg text-white truncate" title="<?php echo htmlspecialchars($infoSala['sala']->getNomeSala()); ?>">
+                                    <?php echo htmlspecialchars($infoSala['sala']->getNomeSala()); ?>
                                 </h3>
 
                                 <!-- NOVAS INFORMAÇÕES -->
@@ -70,6 +70,21 @@
                                 <div class="flex justify-between items-center mt-2 text-sm text-gray-400">
                                     <p>Código: <span class="font-mono bg-gray-900 px-2 py-1 rounded"><?php echo htmlspecialchars($infoSala['sala']->codigoConvite); ?></span></p>
                                     <p>Jogadores: <span class="font-bold"><?php echo $infoSala['quantidadeJogadores']; ?>/5</span></p>
+                                </div>
+
+                                <div class="mt-4 pt-4 border-t border-gray-700">
+                                    <?php if ($infoSala['sala']->idMestre === $_SESSION['user_id']): // Se o utilizador for o mestre ?>
+                                        <div class="flex gap-2">
+                                            <a href="/salas/editar/<?php echo $infoSala['sala']->id; ?>" class="flex-1 text-center bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-2 px-3 rounded-lg text-sm transition-colors">Editar</a>
+                                            <form class="flex-1" action="/salas/deletar/<?php echo $infoSala['sala']->id; ?>" method="POST" onsubmit="return confirm('Tem a certeza que quer excluir esta sala? Esta ação é permanente e removerá todos os participantes.');">
+                                                <button type="submit" class="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-sm transition-colors">Excluir</button>
+                                            </form>
+                                        </div>
+                                    <?php else: // Se o utilizador for um jogador ?>
+                                        <form action="/salas/sair/<?php echo $infoSala['sala']->id; ?>" method="POST" onsubmit="return confirm('Tem a certeza que quer sair desta sala?');">
+                                            <button type="submit" class="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-sm transition-colors">Sair da Sala</button>
+                                        </form>
+                                    <?php endif; ?>
                                 </div>
 
                             </div>

@@ -11,7 +11,7 @@ class Sala
     public readonly ?int $id;
     public readonly int $idMestre;
     public readonly int $idSistema;
-    public readonly string $nomeSala;
+    private string $nomeSala;
     public readonly string $codigoConvite;
     public readonly bool $ativa;
     public readonly string $dataCriacao;
@@ -32,5 +32,20 @@ class Sala
         $this->codigoConvite = $codigoConvite;
         $this->ativa = $ativa;
         $this->dataCriacao = $dataCriacao ?? date('Y-m-d H:i:s');
+    }
+
+    public function getNomeSala(): string
+    {
+        return $this->nomeSala;
+    }
+
+    /**
+     * Altera o nome da sala.
+     *
+     * @param string $novoNome O novo nome para a sala.
+     */
+    public function alterarNome(string $novoNome): void
+    {
+        $this->nomeSala = $novoNome;
     }
 }

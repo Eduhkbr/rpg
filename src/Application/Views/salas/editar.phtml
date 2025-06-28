@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Sala - Central RPG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Oswald', sans-serif; background: linear-gradient(-45deg, #232526, #414345, #1a1a1a, #000000); background-size: 400% 400%; animation: gradientBG 25s ease infinite; }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .font-typewriter { font-family: 'Special Elite', cursive; }
+        .glass-card { background: rgba(10, 10, 10, 0.6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
+
+<div class="glass-card w-full max-w-2xl p-8 rounded-lg shadow-2xl shadow-black/50">
+    <header class="text-center mb-8">
+        <h1 class="font-typewriter text-4xl font-bold text-yellow-400" style="text-shadow: 0 0 10px #f6e05e;">Editar Sala</h1>
+        <p class="text-gray-400">Ajuste os detalhes da sua aventura.</p>
+    </header>
+
+    <?php if (isset($_SESSION['flash_message'])): ?>
+        <?php $flash_message = $_SESSION['flash_message']; unset($_SESSION['flash_message']); ?>
+        <div class="bg-red-900/50 border border-red-500 text-red-300 p-3 rounded-lg mb-6 text-center">
+            <p><?php echo htmlspecialchars($flash_message['message']); ?></p>
+        </div>
+    <?php endif; ?>
+
+    <form action="/salas/editar/<?php echo $sala->id; ?>" method="POST">
+        <div class="space-y-6">
+            <div>
+                <label for="nome_sala" class="block text-sm font-bold text-gray-400 mb-2">Nome da Sala</label>
+                <input type="text" id="nome_sala" name="nome_sala" class="w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all" value="<?php echo htmlspecialchars($sala->getNomeSala()); ?>" required>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-400 mb-2">Sistema / Categoria de Jogo</label>
+                <p class="w-full bg-gray-900/80 border border-gray-700 rounded p-3 text-gray-500">
+                    (O sistema de jogo não pode ser alterado após a criação da sala)
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-8 flex gap-4">
+            <a href="/dashboard" class="w-1/2 text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">Cancelar</a>
+            <button type="submit" class="w-1/2 bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow-lg shadow-yellow-900/50">
+                Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

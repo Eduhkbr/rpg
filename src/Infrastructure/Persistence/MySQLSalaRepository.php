@@ -25,42 +25,41 @@ class MySQLSalaRepository implements SalaRepositoryInterface
      */
     public function salvar(Sala $sala): ?Sala
     {
-        // Inicia uma transação para garantir a atomicidade da operação.
-        $this->conexao->beginTransaction();
+        // Se a sala já tem um ID, é uma atualização.
+        if ($sala->id !== null) {
+            $sql = "UPDATE salas SET nome_sala = :nome_sala WHERE id = :id;";
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':nome_sala', $sala->getNomeSala());
+            $stmt->bindValue(':id', $sala->id, PDO::PARAM_INT);
+            $stmt->execute();
+            return $sala;
+        }
 
+        // Caso contrário, é uma criação.
+        $this->conexao->beginTransaction();
         try {
-            // 1. Insere a nova sala na tabela `salas`.
             $sqlSala = "INSERT INTO salas (id_mestre, id_sistema, nome_sala, codigo_convite) 
                         VALUES (:id_mestre, :id_sistema, :nome_sala, :codigo_convite);";
-
             $stmtSala = $this->conexao->prepare($sqlSala);
             $stmtSala->bindValue(':id_mestre', $sala->idMestre, PDO::PARAM_INT);
             $stmtSala->bindValue(':id_sistema', $sala->idSistema, PDO::PARAM_INT);
-            $stmtSala->bindValue(':nome_sala', $sala->nomeSala);
+            $stmtSala->bindValue(':nome_sala', $sala->getNomeSala());
             $stmtSala->bindValue(':codigo_convite', $sala->codigoConvite);
             $stmtSala->execute();
-
-            // 2. Obtém o ID da sala que acabámos de criar.
             $idNovaSala = (int)$this->conexao->lastInsertId();
 
-            // 3. Insere o mestre como o primeiro participante na tabela `participantes`.
             $sqlParticipante = "INSERT INTO participantes (id_sala, id_usuario) VALUES (:id_sala, :id_usuario);";
             $stmtParticipante = $this->conexao->prepare($sqlParticipante);
             $stmtParticipante->bindValue(':id_sala', $idNovaSala, PDO::PARAM_INT);
             $stmtParticipante->bindValue(':id_usuario', $sala->idMestre, PDO::PARAM_INT);
             $stmtParticipante->execute();
 
-            // 4. Se tudo correu bem, confirma a transação.
             $this->conexao->commit();
-
-            // 5. Retorna um novo objeto Sala, agora com o ID que foi gerado pelo banco.
             return $this->mapearDadosParaSala(['id' => $idNovaSala] + (array)$sala);
-
         } catch (PDOException $e) {
-            // 6. Se algo deu errado, desfaz todas as operações da transação.
             $this->conexao->rollBack();
             error_log("Erro no Repositório de Sala (salvar): " . $e->getMessage());
-            return null; // Retorna null para indicar a falha.
+            return null;
         }
     }
 
@@ -112,6 +111,24 @@ class MySQLSalaRepository implements SalaRepositoryInterface
     /**
      * {@inheritdoc}
      */
+    public function buscarPorId(int $idSala): ?Sala
+    {
+        $sql = "SELECT * FROM salas WHERE id = :id LIMIT 1;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id', $idSala, PDO::PARAM_INT);
+            $stmt->execute();
+            $dados = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $dados ? $this->mapearDadosParaSala($dados) : null;
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (buscarPorId): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function buscarPorCodigoConvite(string $codigo): ?Sala
     {
         $sql = "SELECT * FROM salas WHERE codigo_convite = :codigo LIMIT 1;";
@@ -157,6 +174,39 @@ class MySQLSalaRepository implements SalaRepositoryInterface
             return $stmt->execute();
         } catch (PDOException $e) {
             error_log("Erro no Repositório de Sala (adicionarParticipante): " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function removerParticipante(int $idSala, int $idUsuario): bool
+    {
+        $sql = "DELETE FROM participantes WHERE id_sala = :id_sala AND id_usuario = :id_usuario;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id_sala', $idSala, PDO::PARAM_INT);
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (removerParticipante): " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function deletar(int $idSala): bool
+    {
+        $sql = "DELETE FROM salas WHERE id = :id;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id', $idSala, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (deletar): " . $e->getMessage());
             return false;
         }
     }
