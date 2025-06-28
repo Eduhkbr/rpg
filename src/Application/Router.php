@@ -79,7 +79,6 @@ class Router
 
         // Se nenhum loop encontrou uma rota correspondente.
         http_response_code(404);
-        echo "<h1>404 - Página Não Encontrada</h1>";
-        echo "<p>O roteador não encontrou uma rota para o método <strong>{$method}</strong> e caminho <strong>'{$path}'</strong>.</p>";
+        require __DIR__ . '/Views/errors/404.phtml';
     }
 }
