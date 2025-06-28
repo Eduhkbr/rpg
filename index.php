@@ -75,7 +75,7 @@ try {
     die("Erro de conexão com o banco de dados: " . $e->getMessage());
 }
 
-// --- 3. Injeção de Dependências (Container de Injeção de Dependência manual) ---
+// --- 3. Injeção de Dependências ---
 // Camada de Infraestrutura
 $usuarioRepository = new App\Infrastructure\Persistence\MySQLUsuarioRepository($pdo);
 $emailService = new App\Infrastructure\Notification\PHPMailerAdapter($emailConfig);
@@ -91,21 +91,22 @@ $criarSalaService = new App\Domain\Services\CriarSalaService($salaRepository, $u
 $entrarSalaService = new App\Domain\Services\EntrarSalaService($salaRepository);
 $criarPersonagemService = new App\Domain\Services\CriarPersonagemService($personagemRepository);
 $deletarPersonagemService = new App\Domain\Services\DeletarPersonagemService($personagemRepository);
+$editarPersonagemService = new App\Domain\Services\EditarPersonagemService($personagemRepository);
 
 // Camada de Aplicação (Controllers)
 $usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService, $salaRepository, $personagemRepository);
 $salaController = new App\Application\Controllers\SalaController($criarSalaService, $entrarSalaService, $sistemaRPGRepository);
-$personagemController = new App\Application\Controllers\PersonagemController($criarPersonagemService, $deletarPersonagemService, $sistemaRPGRepository, $personagemRepository);
+$personagemController = new App\Application\Controllers\PersonagemController($criarPersonagemService, $deletarPersonagemService, $editarPersonagemService, $sistemaRPGRepository, $personagemRepository);
 
-// --- 4. Definição das Rotas (ATUALIZADO) ---
+// --- 4. Definição das Rotas ---
 $router = new App\Application\Router();
 
 // Rotas Principais e de Sessão
-$router->get('/', function() { header('Location: /login'); exit(); }); // <-- Rota raiz agora vai para o login
+$router->get('/', function() { header('Location: /login'); exit(); });
 $router->get('/login', [$usuarioController, 'exibirFormularioLogin']);
-$router->post('/login', [$usuarioController, 'processarLogin']); // <-- NOVA ROTA
-$router->get('/logout', [$usuarioController, 'logout']); // <-- NOVA ROTA
-$router->get('/dashboard', [$usuarioController, 'exibirDashboard']); // <-- NOVA ROTA
+$router->post('/login', [$usuarioController, 'processarLogin']);
+$router->get('/logout', [$usuarioController, 'logout']);
+$router->get('/dashboard', [$usuarioController, 'exibirDashboard']);
 
 // Rotas de Cadastro
 $router->get('/cadastro', [$usuarioController, 'exibirFormularioCadastro']);
@@ -126,6 +127,8 @@ $router->get('/personagens/criar', [$personagemController, 'exibirFormularioCria
 $router->post('/personagens/criar', [$personagemController, 'processarCriacao']);
 $router->get('/personagens/ver/{id}', [$personagemController, 'exibirFicha']);
 $router->post('/personagens/deletar/{id}', [$personagemController, 'processarDelecao']);
+$router->get('/personagens/editar/{id}', [$personagemController, 'exibirFormularioEdicao']);
+$router->post('/personagens/editar/{id}', [$personagemController, 'processarEdicao']);
 
 // --- 5. Iniciar a Aplicação ---
 $router->dispatch();

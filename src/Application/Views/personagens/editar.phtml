@@ -1,47 +1,37 @@
 <?php
-/**
- * Função auxiliar recursiva para RENDERIZAR os dados da ficha.
- * Esta versão é para exibição, não para formulários.
- */
-function renderFichaData(array $data): void
+// Função auxiliar recursiva para renderizar os campos do formulário.
+// Esta função é inteligente o suficiente para preencher os valores existentes.
+function renderFormFields(array $data, string $parentKey = 'personagem'): void
 {
     $gridKeys = ['atributos', 'modificadores', 'vida', 'moedas', 'estado_mental', 'ferimentos'];
-
     foreach ($data as $key => $value) {
+        $currentKey = $parentKey . '[' . $key . ']';
         $label = ucfirst(str_replace('_', ' ', $key));
 
-        // Ignora o nome do personagem, pois já é exibido no cabeçalho.
-        if ($key === 'nome_personagem') continue;
-
-        // Caso 1: É um objeto (array associativo)
         if (is_array($value) && !empty($value) && array_keys($value) !== range(0, count($value) - 1)) {
             if (in_array($key, $gridKeys)) {
                 echo "<fieldset class='border border-gray-700 p-4 rounded-lg mt-6 mb-4'><legend class='px-2 font-bold text-lg text-yellow-400'>{$label}</legend>";
                 echo "<div class='grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4'>";
-                renderFichaData($value);
+                renderFormFields($value, $currentKey);
                 echo "</div></fieldset>";
             } else {
                 echo "<fieldset class='border border-gray-700 p-4 rounded-lg mt-6 mb-4'><legend class='px-2 font-bold text-lg text-yellow-400'>{$label}</legend>";
-                renderFichaData($value);
+                renderFormFields($value, $currentKey);
                 echo "</fieldset>";
             }
-        }
-        // Caso 2: É uma lista (array indexado)
-        elseif (is_array($value)) {
-            echo "<div class='col-span-1 md:col-span-2 mt-4'><h4 class='block text-sm font-bold text-gray-400 mb-2'>{$label}</h4><ul class='list-disc list-inside pl-2 space-y-1 font-mono text-sm'>";
-            foreach($value as $item) {
-                echo "<li>" . htmlspecialchars($item) . "</li>";
-            }
-            echo "</ul></div>";
-        }
-        // Caso 3: É um valor simples
-        else {
+        } elseif (is_array($value)) {
+            $textareaValue = implode("\n", $value);
+            echo "<div class='col-span-1 md:col-span-2'><label for='{$currentKey}' class='block text-sm font-bold text-gray-400 mb-2'>{$label}</label><textarea id='{$currentKey}' name='{$currentKey}' class='w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-green-500 font-mono text-sm' rows='4' placeholder='Um item por linha'>{$textareaValue}</textarea></div>";
+        } else {
+            $inputType = is_numeric($value) ? 'number' : 'text';
+            $placeholder = is_string($value) && empty($value) ? "..." : '';
+            $inputValue = htmlspecialchars($value);
             $isLongText = strlen($value) > 80 || strpos($key, 'descricao') !== false || strpos($key, 'historia') !== false || strpos($key, 'notas') !== false;
 
             if ($isLongText) {
-                echo "<div class='col-span-1 md:col-span-2 mt-4'><h4 class='block text-sm font-bold text-gray-400 mb-2'>{$label}</h4><p class='text-gray-300 whitespace-pre-wrap'>" . htmlspecialchars($value) . "</p></div>";
+                echo "<div class='col-span-1 md:col-span-2'><label for='{$currentKey}' class='block text-sm font-bold text-gray-400 mb-2'>{$label}</label><textarea id='{$currentKey}' name='{$currentKey}' class='w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-green-500' rows='5'>{$inputValue}</textarea></div>";
             } else {
-                echo "<div><h4 class='block text-sm font-bold text-gray-400 mb-1'>{$label}</h4><p class='text-lg'>" . htmlspecialchars($value) . "</p></div>";
+                echo "<div><label for='{$currentKey}' class='block text-sm font-bold text-gray-400 mb-1'>{$label}</label><input type='{$inputType}' id='{$currentKey}' name='{$currentKey}' value='{$inputValue}' placeholder='{$placeholder}' class='w-full bg-gray-900/50 border border-gray-600 rounded p-3 focus:outline-none focus:ring-2 focus:ring-green-500'></div>";
             }
         }
     }
@@ -53,7 +43,7 @@ function renderFichaData(array $data): void
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficha de <?php echo htmlspecialchars($personagem->getNomePersonagem()); ?> - Central RPG</title>
+    <title>Editar <?php echo htmlspecialchars($personagem->getNomePersonagem()); ?> - Central RPG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -68,16 +58,9 @@ function renderFichaData(array $data): void
 <body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
 
 <div class="glass-card w-full max-w-4xl p-8 rounded-lg shadow-2xl shadow-black/50">
-    <header class="text-center mb-8 border-b border-gray-700 pb-6">
-        <h1 class="font-typewriter text-5xl font-bold text-green-400" style="text-shadow: 0 0 10px #2f855a;"><?php echo htmlspecialchars($personagem->getNomePersonagem()); ?></h1>
-
-        <div class="mt-4 flex justify-center items-center gap-4">
-            <a href="/dashboard" class="text-sm text-blue-400 hover:underline">&larr; Voltar para o Painel</a>
-            <span class="text-gray-600">|</span>
-            <a href="/personagens/editar/<?php echo $personagem->getId(); ?>" class="text-sm bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-1 px-3 rounded-lg transition-colors">
-                Editar Ficha
-            </a>
-        </div>
+    <header class="text-center mb-8">
+        <h1 class="font-typewriter text-4xl font-bold text-green-400" style="text-shadow: 0 0 10px #2f855a;">Editar Personagem</h1>
+        <p class="text-gray-400">Ajuste os detalhes da sua lenda.</p>
     </header>
 
     <?php if (isset($_SESSION['flash_message'])): ?>
@@ -87,20 +70,16 @@ function renderFichaData(array $data): void
         </div>
     <?php endif; ?>
 
-    <div>
-        <?php renderFichaData($ficha); ?>
-    </div>
-    <!-- Secção de Ações e Exclusão -->
-    <div class="mt-8 pt-6 border-t border-red-900/50">
-        <h3 class="text-xl font-bold text-red-500 mb-4">Zona de Perigo</h3>
-        <p class="text-gray-400 mb-4">A exclusão de um personagem é uma ação permanente e não pode ser desfeita.</p>
+    <form action="/personagens/editar/<?php echo $personagem->getId(); ?>" method="POST">
+        <?php renderFormFields($ficha); ?>
 
-        <form action="/personagens/deletar/<?php echo $personagem->getId(); ?>" method="POST" onsubmit="return confirm('Tem a certeza que quer excluir permanentemente este personagem? Esta ação não pode ser desfeita.');">
-            <button type="submit" class="w-full sm:w-auto bg-red-800 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                Excluir Personagem Permanentemente
+        <div class="mt-8 flex gap-4">
+            <a href="/personagens/ver/<?php echo $personagem->getId(); ?>" class="w-1/2 text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors">Cancelar</a>
+            <button type="submit" class="w-1/2 bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 shadow-lg shadow-green-900/50">
+                Salvar Alterações
             </button>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 </body>

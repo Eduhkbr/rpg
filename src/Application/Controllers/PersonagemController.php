@@ -7,6 +7,7 @@ use App\Domain\Services\DeletarPersonagemService;
 use App\Domain\Services\CriarPersonagemService;
 use App\Domain\Repositories\SistemaRPGRepositoryInterface;
 use App\Domain\Exceptions\AcessoNegadoException;
+use App\Domain\Services\EditarPersonagemService;
 use Exception;
 
 /**
@@ -18,17 +19,20 @@ class PersonagemController
 {
     private CriarPersonagemService $criarPersonagemService;
     private DeletarPersonagemService $deletarPersonagemService;
+    private EditarPersonagemService $editarPersonagemService;
     private SistemaRPGRepositoryInterface $sistemaRPGRepository;
     private PersonagemRepositoryInterface $personagemRepository;
 
     public function __construct(
         CriarPersonagemService $criarPersonagemService,
         DeletarPersonagemService $deletarPersonagemService,
+        EditarPersonagemService $editarPersonagemService,
         SistemaRPGRepositoryInterface $sistemaRPGRepository,
         PersonagemRepositoryInterface $personagemRepository
     ) {
         $this->criarPersonagemService = $criarPersonagemService;
         $this->deletarPersonagemService = $deletarPersonagemService;
+        $this->editarPersonagemService = $editarPersonagemService;
         $this->sistemaRPGRepository = $sistemaRPGRepository;
         $this->personagemRepository = $personagemRepository;
     }
@@ -181,6 +185,74 @@ class PersonagemController
             // 4. Falha: Se o utilizador não for o dono ou ocorrer outro erro.
             $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
             header('Location: /dashboard');
+            exit();
+        }
+    }
+
+    /**
+     * Exibe o formulário para editar um personagem existente.
+     * Lida com a requisição GET para /personagens/editar/{id}.
+     *
+     * @param int $id O ID do personagem a ser editado.
+     */
+    public function exibirFormularioEdicao(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit();
+        }
+
+        try {
+            $personagem = $this->personagemRepository->buscarPorId($id);
+
+            // Verificação de Segurança e Existência
+            if ($personagem === null || $personagem->getIdUsuario() !== $_SESSION['user_id']) {
+                $_SESSION['flash_message'] = ['type' => 'erro', 'message' => 'Personagem não encontrado ou acesso não permitido.'];
+                header('Location: /dashboard');
+                exit();
+            }
+
+            // Renderiza a view de edição, passando os dados do personagem.
+            $this->renderView('personagens/editar', [
+                'personagem' => $personagem,
+                'ficha' => $personagem->getFichaComoArray()
+            ]);
+
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => 'Ocorreu um erro ao carregar os dados para edição.'];
+            header('Location: /dashboard');
+            exit();
+        }
+    }
+
+    /**
+     * Processa os dados do formulário de edição de personagem.
+     * Lida com a requisição POST para /personagens/editar/{id}.
+     *
+     * @param int $id O ID do personagem a ser editado.
+     */
+    public function processarEdicao(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit();
+        }
+
+        try {
+            $dadosFicha = $_POST['personagem'] ?? [];
+
+            // Delega a lógica de negócio para o serviço de domínio.
+            $this->editarPersonagemService->executar($id, $_SESSION['user_id'], $dadosFicha);
+
+            // Sucesso: Redireciona de volta para a ficha do personagem com uma mensagem.
+            $_SESSION['flash_message'] = ['type' => 'sucesso', 'message' => 'Personagem atualizado com sucesso!'];
+            header('Location: /personagens/ver/' . $id);
+            exit();
+
+        } catch (AcessoNegadoException | Exception $e) {
+            // Em caso de erro, redireciona de volta para o formulário de edição com a mensagem.
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+            header('Location: /personagens/editar/' . $id);
             exit();
         }
     }
