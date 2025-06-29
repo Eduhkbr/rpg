@@ -64,6 +64,14 @@ interface SalaRepositoryInterface
     public function removerParticipante(int $idSala, int $idUsuario): bool;
 
     /**
+     * Busca informações detalhadas de todos os participantes de uma sala.
+     *
+     * @param int $idSala O ID da sala.
+     * @return array Uma lista de arrays com informações dos participantes (nome do utilizador, nome do personagem, etc.).
+     */
+    public function buscarParticipantesInfo(int $idSala): array;
+
+    /**
      * Associa um personagem a um participante numa sala específica.
      *
      * @param int $idSala O ID da sala.

@@ -16,6 +16,8 @@ use App\Domain\Exceptions\LimiteDeSalasAtingidoException;
 use App\Domain\Repositories\SalaRepositoryInterface;
 use App\Domain\Exceptions\AcessoNegadoException;
 use App\Domain\Services\SairSalaService;
+use App\Domain\Services\PublicarNoLogService;
+use App\Domain\Repositories\LogRepositoryInterface;
 use Exception;
 
 /**
@@ -34,6 +36,8 @@ class SalaController
     private SalaRepositoryInterface $salaRepository;
     private AssociarPersonagemService $associarPersonagemService;
     private PersonagemRepositoryInterface $personagemRepository;
+    private PublicarNoLogService $publicarNoLogService;
+    private LogRepositoryInterface $logRepository;
 
     public function __construct(
         CriarSalaService $criarSalaService,
@@ -44,7 +48,9 @@ class SalaController
         AssociarPersonagemService $associarPersonagemService,
         SistemaRPGRepositoryInterface $sistemaRPGRepository,
         SalaRepositoryInterface $salaRepository,
-        PersonagemRepositoryInterface $personagemRepository
+        PublicarNoLogService $publicarNoLogService,
+        PersonagemRepositoryInterface $personagemRepository,
+        LogRepositoryInterface $logRepository
     ) {
         $this->criarSalaService = $criarSalaService;
         $this->entrarSalaService = $entrarSalaService;
@@ -55,6 +61,8 @@ class SalaController
         $this->salaRepository = $salaRepository;
         $this->associarPersonagemService = $associarPersonagemService;
         $this->personagemRepository = $personagemRepository;
+        $this->publicarNoLogService = $publicarNoLogService;
+        $this->logRepository = $logRepository;
     }
 
     /**
@@ -234,7 +242,7 @@ class SalaController
      * Verifica se o utilizador precisa de selecionar um personagem ou se já pode entrar no jogo.
      * Lida com a requisição GET para /sala/{id}.
      */
-    public function exibirEntradaSala(int $id): void
+    public function exibirSalaDeJogo(int $id): void
     {
         if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit(); }
 
@@ -243,36 +251,70 @@ class SalaController
             $sala = $this->salaRepository->buscarPorId($id);
             if ($sala === null) { throw new Exception("Sala não encontrada."); }
 
-            // Se o utilizador for o mestre, ele não precisa de selecionar personagem.
-            if ($sala->idMestre === $idUsuario) {
-                // Futuramente, redirecionará para a sala de jogo. Por agora, uma mensagem.
-                $this->renderView('salas/jogo', ['sala' => $sala]);
-                return;
-            }
-
+            // Verifica se o utilizador realmente participa nesta sala (segurança).
             $participante = $this->salaRepository->buscarParticipante($id, $idUsuario);
             if ($participante === null) { throw new AcessoNegadoException("Você não participa nesta sala."); }
 
-            // Se o jogador já associou um personagem, entra direto no jogo.
-            if (!empty($participante['id_personagem'])) {
-                $this->renderView('salas/jogo', ['sala' => $sala]);
-                return;
+            // Se for um jogador e ainda não escolheu um personagem, redireciona para a seleção.
+            if ($sala->idMestre !== $idUsuario && empty($participante['id_personagem'])) {
+                header("Location: /sala/{$id}/selecionar");
+                exit();
             }
 
-            // Se não, busca os personagens compatíveis para a seleção.
-            $personagensDoUsuario = $this->personagemRepository->buscarPorUsuarioId($idUsuario);
-            $personagensCompativeis = array_filter($personagensDoUsuario, function($info) use ($sala) {
-                return $info['personagem']->getIdSistema() === $sala->idSistema;
-            });
+            // Busca todos os dados necessários para a view.
+            $logs = $this->logRepository->buscarPorSalaId($id);
+            $participantes = $this->salaRepository->buscarParticipantesInfo($id);
 
-            $this->renderView('salas/selecionar-personagem', [
+            // Determina o nome do autor para o formulário de publicação.
+            $nomeAutor = ($sala->idMestre === $idUsuario) ? "Mestre" : ($participante['nome_personagem'] ?? "Jogador");
+
+            $this->renderView('salas/jogo', [
                 'sala' => $sala,
-                'personagens' => $personagensCompativeis
+                'logs' => $logs,
+                'participantes' => $participantes,
+                'nomeAutor' => $nomeAutor
             ]);
 
         } catch (Exception $e) {
             $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
             header('Location: /dashboard');
+            exit();
+        }
+    }
+
+    /**
+     * Processa uma nova publicação no log da sala.
+     * Lida com a requisição POST para /sala/{id}/publicar.
+     */
+    public function processarPublicacao(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit(); }
+
+        try {
+            $idUsuario = $_SESSION['user_id'];
+            $mensagem = $_POST['mensagem'] ?? '';
+
+            $sala = $this->salaRepository->buscarPorId($id);
+            if ($sala === null) { throw new Exception("Sala não encontrada."); }
+
+            $participante = $this->salaRepository->buscarParticipante($id, $idUsuario);
+            if ($participante === null) { throw new AcessoNegadoException("Acesso negado."); }
+
+            // Determina o tipo e o nome do autor.
+            $isMestre = ($sala->idMestre === $idUsuario);
+            $tipoLog = $isMestre ? 'mestre' : 'jogador';
+            $nomeAutor = $isMestre ? "Mestre" : ($participante['nome_personagem'] ?? "Jogador Anónimo");
+
+            // Delega para o serviço de domínio.
+            $this->publicarNoLogService->executar($id, $nomeAutor, $tipoLog, $mensagem);
+
+            // Redireciona de volta para a sala.
+            header("Location: /sala/{$id}");
+            exit();
+
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+            header("Location: /sala/{$id}");
             exit();
         }
     }

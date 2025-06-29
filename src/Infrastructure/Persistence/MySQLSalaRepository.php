@@ -256,6 +256,33 @@ class MySQLSalaRepository implements SalaRepositoryInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function buscarParticipantesInfo(int $idSala): array
+    {
+        // Esta query junta participantes (p), utilizadores (u) e personagens (pers)
+        // para obter o nome do utilizador e o nome do seu personagem associado (se houver).
+        $sql = "SELECT 
+                    u.nome_usuario,
+                    p.id_usuario,
+                    p.id_personagem,
+                    pers.nome_personagem
+                FROM participantes p
+                JOIN usuarios u ON p.id_usuario = u.id
+                LEFT JOIN personagens pers ON p.id_personagem = pers.id
+                WHERE p.id_sala = :id_sala;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id_sala', $idSala, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (buscarParticipantesInfo): " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Método auxiliar para mapear um array de dados do banco para um objeto Sala.
      * Evita a repetição de código.
      *
