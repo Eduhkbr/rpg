@@ -113,7 +113,23 @@ class UsuarioController
      * Exibe o formulário para o utilizador inserir o código de verificação.
      * Lida com a requisição GET para /verificar.
      */
-    public function exibirFormularioVerificacao(): void { $this->renderView('usuarios/verificar'); }
+    public function exibirFormularioVerificacao(): void
+    {
+        // Pega o e-mail da URL, se existir.
+        $email = filter_input(INPUT_GET, 'email', FILTER_SANITIZE_EMAIL);
+
+        // Pega a mensagem flash, se existir.
+        $flash_message = $_SESSION['flash_message'] ?? null;
+        if ($flash_message) {
+            unset($_SESSION['flash_message']);
+        }
+
+        // Passa ambos para a View.
+        $this->renderView('usuarios/verificar', [
+            'email' => $email,
+            'flash_message' => $flash_message
+        ]);
+    }
 
     /**
      * Processa o código de verificação submetido pelo utilizador.
@@ -188,7 +204,14 @@ class UsuarioController
             header('Location: /dashboard');
             exit();
 
-        } catch (CredenciaisInvalidasException | EmailNaoVerificadoException $e) {
+        } catch (EmailNaoVerificadoException $e) {
+            // NOVO COMPORTAMENTO: Se o e-mail não for verificado,
+            // redireciona para a página de verificação, passando o e-mail na URL.
+            $_SESSION['flash_message'] = ['type' => 'info', 'message' => 'A sua conta ainda não foi verificada. Por favor, insira o código que enviámos para o seu e-mail.'];
+            header('Location: /verificar?email=' . urlencode($email));
+            exit();
+
+        } catch (CredenciaisInvalidasException $e) {
             // 4. Falha Específica: Trata os erros de login conhecidos.
             $this->renderView('usuarios/login', [
                 'erro' => $e->getMessage(),
