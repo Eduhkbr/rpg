@@ -12,66 +12,99 @@
         body { font-family: 'Oswald', sans-serif; background: linear-gradient(-45deg, #232526, #414345, #1a1a1a, #000000); background-size: 400% 400%; animation: gradientBG 25s ease infinite; }
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .font-typewriter { font-family: 'Special Elite', cursive; }
-        .glass-card { background: rgba(10, 10, 10, 0.6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-card { background: rgba(10, 10, 10, 0.7); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .log-mestre { border-left: 3px solid #e53e3e; }
         .log-jogador { border-left: 3px solid #4299e1; }
         .log-sistema { border-left: 3px solid #f6e05e; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #718096; }
     </style>
 </head>
 <body class="text-gray-200">
 
-<div class="flex flex-col h-screen">
+<div class="flex flex-col h-screen bg-gray-900/50">
     <!-- Cabeçalho -->
-    <header class="glass-card flex-shrink-0 p-4 flex justify-between items-center">
-        <h1 class="font-typewriter text-2xl md:text-3xl font-bold text-green-400"><?php echo htmlspecialchars($sala->getNomeSala()); ?></h1>
-        <a href="/dashboard" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">&larr; Painel</a>
+    <header class="flex-shrink-0 p-3 flex justify-between items-center border-b border-gray-700 bg-gray-900">
+        <h1 class="font-typewriter text-xl md:text-2xl font-bold text-green-400"><?php echo htmlspecialchars($sala->getNomeSala()); ?></h1>
+        <a href="/dashboard" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">&larr; Painel</a>
     </header>
 
     <!-- Corpo Principal -->
-    <div class="flex-grow flex flex-col md:flex-row gap-4 p-4 overflow-hidden">
+    <div class="flex-grow flex flex-col md:flex-row gap-2 p-2 overflow-hidden">
 
-        <!-- Coluna Principal: Log e Formulário -->
-        <main class="flex-grow flex flex-col glass-card rounded-lg p-4 overflow-hidden">
-            <!-- Log do Jogo -->
-            <div id="log-container" class="flex-grow overflow-y-auto flex flex-col-reverse p-2 bg-black/20 rounded-lg">
-                <div class="space-y-4">
-                    <?php if (empty($logs)): ?>
-                        <p class="font-typewriter text-gray-500 text-center p-4">A aventura ainda não começou. O silêncio é pesado...</p>
-                    <?php endif; ?>
-                    <?php foreach (array_reverse($logs) as $log): ?>
-                        <div class="p-3 rounded-r-lg font-typewriter text-sm log-<?php echo $log->tipoLog; ?>">
-                            <p class="font-sans font-bold text-xs uppercase text-<?php echo $log->tipoLog === 'mestre' ? 'red' : ($log->tipoLog === 'jogador' ? 'blue' : 'yellow'); ?>-400"><?php echo htmlspecialchars($log->autorNome); ?></p>
-                            <p class="text-gray-300 whitespace-pre-wrap"><?php echo htmlspecialchars($log->mensagem); ?></p>
+        <!-- Coluna Esquerda: Painel do Mestre/Jogador -->
+        <aside class="flex-shrink-0 w-full md:w-64 lg:w-72 glass-card rounded-lg p-3 flex flex-col">
+            <h2 class="text-lg font-bold text-yellow-400 border-b border-gray-700 pb-2 mb-3">Participantes</h2>
+            <div class="flex-grow overflow-y-auto custom-scrollbar pr-2">
+                <div class="space-y-3">
+                    <?php foreach ($participantes as $participante): ?>
+                        <div class="bg-black/20 p-3 rounded-lg">
+                            <p class="font-bold text-white"><?php echo htmlspecialchars($participante['nome_usuario']); ?></p>
+                            <?php if ($sala->idMestre === $participante['id_usuario']): ?>
+                                <p class="text-xs text-red-400">Mestre da Sala</p>
+                            <?php elseif (!empty($participante['nome_personagem'])): ?>
+                                <p class="text-sm text-gray-300">a jogar como <strong class="text-green-300"><?php echo htmlspecialchars($participante['nome_personagem']); ?></strong></p>
+                            <?php else: ?>
+                                <p class="text-sm text-gray-500">(Ainda não escolheu um personagem)</p>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
             </div>
-            <!-- Formulário de Publicação -->
-            <form action="/sala/<?php echo $sala->id; ?>/publicar" method="POST" class="flex-shrink-0 mt-4">
-                <textarea name="mensagem" class="w-full bg-gray-900/50 border border-gray-600 rounded-t-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-500" rows="3" placeholder="O que você faz, <?php echo htmlspecialchars($nomeAutor); ?>?"></textarea>
-                <button type="submit" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 rounded-b-lg transition-colors">Publicar Ação</button>
-            </form>
-        </main>
-
-        <!-- Barra Lateral: Participantes -->
-        <aside class="flex-shrink-0 w-full md:w-64 lg:w-72 glass-card rounded-lg p-4 overflow-y-auto">
-            <h2 class="text-xl font-bold text-yellow-400 border-b border-gray-700 pb-2 mb-4">Participantes</h2>
-            <div class="space-y-3">
-                <?php foreach ($participantes as $participante): ?>
-                    <div class="bg-black/20 p-3 rounded-lg">
-                        <p class="font-bold text-white"><?php echo htmlspecialchars($participante['nome_usuario']); ?></p>
-                        <?php if ($sala->idMestre === $participante['id_usuario']): ?>
-                            <p class="text-xs text-red-400">Mestre da Sala</p>
-                        <?php elseif (!empty($participante['nome_personagem'])): ?>
-                            <p class="text-sm text-gray-300">a jogar como <strong class="text-green-300"><?php echo htmlspecialchars($participante['nome_personagem']); ?></strong></p>
-                        <?php else: ?>
-                            <p class="text-sm text-gray-500">(Ainda não escolheu um personagem)</p>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
         </aside>
 
+        <!-- Coluna Central: Mesa de Jogo -->
+        <main class="flex-grow flex flex-col rounded-lg overflow-hidden">
+            <div class="flex-shrink-0 bg-black/30 p-2 rounded-t-lg flex items-center justify-between">
+                <div class="font-bold">Turno de: <span class="text-yellow-400">Aragorn</span></div>
+                <!-- Barra de Ferramentas do Mapa -->
+                <div class="flex items-center gap-3 text-gray-400">
+                    <button id="change-map-btn" title="Alterar Mapa" class="hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button id="add-token-btn" title="Adicionar Token" class="hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- O Mapa -->
+            <div id="map-container" class="flex-grow bg-gray-800 flex items-center justify-center" style="background-image: url('https://i.imgur.com/GpBc41v.png'); background-size: cover;">
+                <canvas id="game-map" class="w-full h-full"></canvas>
+            </div>
+        </main>
+
+        <!-- Coluna Direita: Log e Ferramentas -->
+        <aside class="flex-shrink-0 w-full md:w-72 lg:w-80 glass-card rounded-lg p-3 flex flex-col overflow-hidden">
+            <!-- Abas -->
+            <div class="flex-shrink-0 flex border-b border-gray-700">
+                <button class="flex-1 py-2 text-center font-bold bg-black/30 rounded-t-lg">Log do Jogo</button>
+                <button class="flex-1 py-2 text-center text-gray-400 hover:bg-black/20">Dados</button>
+            </div>
+            <!-- Conteúdo das Abas -->
+            <div class="flex-grow flex flex-col overflow-hidden">
+                <!-- Log do Jogo -->
+                <div id="log-container" class="flex-grow overflow-y-auto custom-scrollbar flex flex-col-reverse p-2 mt-2">
+                    <div class="space-y-4">
+                        <?php if (empty($logs)): ?>
+                            <p class="font-typewriter text-gray-500 text-center p-4">A aventura ainda não começou...</p>
+                        <?php endif; ?>
+                        <?php foreach (array_reverse($logs) as $log): ?>
+                            <div class="p-2 rounded-r-lg font-typewriter text-sm log-<?php echo $log->tipoLog; ?>">
+                                <p class="font-sans font-bold text-xs uppercase text-<?php echo $log->tipoLog === 'mestre' ? 'red' : ($log->tipoLog === 'jogador' ? 'blue' : 'yellow'); ?>-400"><?php echo htmlspecialchars($log->autorNome); ?></p>
+                                <p class="text-gray-300 whitespace-pre-wrap text-sm"><?php echo htmlspecialchars($log->mensagem); ?></p>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <!-- Formulário de Publicação -->
+                <form action="/sala/<?php echo $sala->id; ?>/publicar" method="POST" class="flex-shrink-0 mt-2">
+                    <textarea name="mensagem" class="w-full bg-gray-900/50 border border-gray-600 rounded-t-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm" rows="3" placeholder="O que você faz, <?php echo htmlspecialchars($nomeAutor); ?>?"></textarea>
+                    <button type="submit" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 rounded-b-lg transition-colors">Publicar</button>
+                </form>
+            </div>
+        </aside>
     </div>
 </div>
 <script>

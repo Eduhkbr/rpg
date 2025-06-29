@@ -236,17 +236,21 @@ class MySQLSalaRepository implements SalaRepositoryInterface
      */
     public function buscarParticipante(int $idSala, int $idUsuario): ?array
     {
-        $sql = "SELECT * FROM participantes WHERE id_sala = :id_sala AND id_usuario = :id_usuario LIMIT 1;";
+        $sql = "SELECT 
+                    p.*, 
+                    pers.nome_personagem 
+                FROM participantes p
+                LEFT JOIN personagens pers ON p.id_personagem = pers.id
+                WHERE p.id_sala = :id_sala AND p.id_usuario = :id_usuario 
+                LIMIT 1;";
         try {
             $stmt = $this->conexao->prepare($sql);
             $stmt->bindValue(':id_sala', $idSala, PDO::PARAM_INT);
             $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
             $stmt->execute();
 
-            // fetch() retorna os dados ou `false` se não encontrar nada.
             $dados = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Retorna o array de dados se encontrado, ou null se não.
             return $dados ?: null;
 
         } catch (PDOException $e) {

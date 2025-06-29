@@ -251,21 +251,26 @@ class SalaController
             $sala = $this->salaRepository->buscarPorId($id);
             if ($sala === null) { throw new Exception("Sala não encontrada."); }
 
-            // Verifica se o utilizador realmente participa nesta sala (segurança).
             $participante = $this->salaRepository->buscarParticipante($id, $idUsuario);
             if ($participante === null) { throw new AcessoNegadoException("Você não participa nesta sala."); }
 
-            // Se for um jogador e ainda não escolheu um personagem, redireciona para a seleção.
+            // Se for um jogador e ainda não escolheu um personagem, mostra a página de seleção.
             if ($sala->idMestre !== $idUsuario && empty($participante['id_personagem'])) {
-                header("Location: /sala/{$id}/selecionar");
-                exit();
+                $personagensDoUsuario = $this->personagemRepository->buscarPorUsuarioId($idUsuario);
+                $personagensCompativeis = array_filter($personagensDoUsuario, function($info) use ($sala) {
+                    return $info['personagem']->getIdSistema() === $sala->idSistema;
+                });
+
+                $this->renderView('salas/selecionar-personagem', [
+                    'sala' => $sala,
+                    'personagens' => $personagensCompativeis
+                ]);
+                return;
             }
 
-            // Busca todos os dados necessários para a view.
+            // Se for o mestre ou um jogador que já escolheu personagem, mostra a sala de jogo.
             $logs = $this->logRepository->buscarPorSalaId($id);
             $participantes = $this->salaRepository->buscarParticipantesInfo($id);
-
-            // Determina o nome do autor para o formulário de publicação.
             $nomeAutor = ($sala->idMestre === $idUsuario) ? "Mestre" : ($participante['nome_personagem'] ?? "Jogador");
 
             $this->renderView('salas/jogo', [
@@ -300,15 +305,12 @@ class SalaController
             $participante = $this->salaRepository->buscarParticipante($id, $idUsuario);
             if ($participante === null) { throw new AcessoNegadoException("Acesso negado."); }
 
-            // Determina o tipo e o nome do autor.
             $isMestre = ($sala->idMestre === $idUsuario);
             $tipoLog = $isMestre ? 'mestre' : 'jogador';
             $nomeAutor = $isMestre ? "Mestre" : ($participante['nome_personagem'] ?? "Jogador Anónimo");
 
-            // Delega para o serviço de domínio.
             $this->publicarNoLogService->executar($id, $nomeAutor, $tipoLog, $mensagem);
 
-            // Redireciona de volta para a sala.
             header("Location: /sala/{$id}");
             exit();
 
