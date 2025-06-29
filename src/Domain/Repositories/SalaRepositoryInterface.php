@@ -64,6 +64,25 @@ interface SalaRepositoryInterface
     public function removerParticipante(int $idSala, int $idUsuario): bool;
 
     /**
+     * Associa um personagem a um participante numa sala específica.
+     *
+     * @param int $idSala O ID da sala.
+     * @param int $idUsuario O ID do utilizador (participante).
+     * @param int $idPersonagem O ID do personagem a ser associado.
+     * @return bool Retorna true em caso de sucesso, false em caso de falha.
+     */
+    public function associarPersonagem(int $idSala, int $idUsuario, int $idPersonagem): bool;
+
+    /**
+     * Busca os dados de um participante específico numa sala.
+     *
+     * @param int $idSala O ID da sala.
+     * @param int $idUsuario O ID do utilizador.
+     * @return array|null Retorna os dados do participante (incluindo id_personagem) ou null.
+     */
+    public function buscarParticipante(int $idSala, int $idUsuario): ?array;
+
+    /**
      * Deleta uma sala da fonte de dados pelo seu ID.
      *
      * @param int $idSala O ID da sala a ser deletada.

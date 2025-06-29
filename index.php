@@ -82,6 +82,7 @@ $emailService = new App\Infrastructure\Notification\PHPMailerAdapter($emailConfi
 $sistemaRPGRepository = new App\Infrastructure\Persistence\MySQLSistemaRPGRepository($pdo);
 $salaRepository = new App\Infrastructure\Persistence\MySQLSalaRepository($pdo);
 $personagemRepository = new App\Infrastructure\Persistence\MySQLPersonagemRepository($pdo);
+$associarPersonagemService = new App\Domain\Services\AssociarPersonagemService($salaRepository, $personagemRepository);
 
 // Camada de Domínio (Serviços)
 $cadastroService = new App\Domain\Services\CadastroService($usuarioRepository, $emailService);
@@ -98,7 +99,7 @@ $sairSalaService = new App\Domain\Services\SairSalaService($salaRepository);
 
 // Camada de Aplicação (Controllers)
 $usuarioController = new App\Application\Controllers\UsuarioController($cadastroService, $verificacaoEmailService, $loginService, $salaRepository, $personagemRepository);
-$salaController = new App\Application\Controllers\SalaController($criarSalaService,$entrarSalaService, $editarSalaService, $deletarSalaService,$sairSalaService,$sistemaRPGRepository,$salaRepository);
+$salaController = new App\Application\Controllers\SalaController($criarSalaService,$entrarSalaService, $editarSalaService, $deletarSalaService, $sairSalaService, $associarPersonagemService, $sistemaRPGRepository, $salaRepository, $personagemRepository);
 $personagemController = new App\Application\Controllers\PersonagemController($criarPersonagemService, $deletarPersonagemService, $editarPersonagemService, $sistemaRPGRepository, $personagemRepository);
 
 // --- 4. Definição das Rotas ---
@@ -128,6 +129,8 @@ $router->get('/salas/editar/{id}', [$salaController, 'exibirFormularioEdicao']);
 $router->post('/salas/editar/{id}', [$salaController, 'processarEdicao']);
 $router->post('/salas/deletar/{id}', [$salaController, 'processarDelecao']);
 $router->post('/salas/sair/{id}', [$salaController, 'processarSaida']);
+$router->get('/sala/{id}', [$salaController, 'exibirEntradaSala']);
+$router->post('/sala/{id}/selecionar', [$salaController, 'processarSelecaoPersonagem']);
 
 // Rotas de personagens
 $router->get('/personagens/criar', [$personagemController, 'exibirFormularioCriacao']);

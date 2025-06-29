@@ -212,6 +212,50 @@ class MySQLSalaRepository implements SalaRepositoryInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function associarPersonagem(int $idSala, int $idUsuario, int $idPersonagem): bool
+    {
+        // Atualiza a coluna `id_personagem` para um participante específico numa sala.
+        $sql = "UPDATE participantes SET id_personagem = :id_personagem 
+                WHERE id_sala = :id_sala AND id_usuario = :id_usuario;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id_personagem', $idPersonagem, PDO::PARAM_INT);
+            $stmt->bindValue(':id_sala', $idSala, PDO::PARAM_INT);
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (associarPersonagem): " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function buscarParticipante(int $idSala, int $idUsuario): ?array
+    {
+        $sql = "SELECT * FROM participantes WHERE id_sala = :id_sala AND id_usuario = :id_usuario LIMIT 1;";
+        try {
+            $stmt = $this->conexao->prepare($sql);
+            $stmt->bindValue(':id_sala', $idSala, PDO::PARAM_INT);
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->execute();
+
+            // fetch() retorna os dados ou `false` se não encontrar nada.
+            $dados = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Retorna o array de dados se encontrado, ou null se não.
+            return $dados ?: null;
+
+        } catch (PDOException $e) {
+            error_log("Erro no Repositório de Sala (buscarParticipante): " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Método auxiliar para mapear um array de dados do banco para um objeto Sala.
      * Evita a repetição de código.
      *
@@ -229,4 +273,5 @@ class MySQLSalaRepository implements SalaRepositoryInterface
         $dataCriacao = isset($dados['data_criacao']) ? $dados['data_criacao'] : null;
         return new Sala($idMestre, $idSistema, $nomeSala, $codigoConvite, $id, $ativa, $dataCriacao);
     }
+
 }

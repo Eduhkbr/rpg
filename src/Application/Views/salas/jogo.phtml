@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala: <?php echo htmlspecialchars($sala->getNomeSala()); ?> - Central RPG</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Oswald', sans-serif; background: linear-gradient(-45deg, #232526, #414345, #1a1a1a, #000000); background-size: 400% 400%; animation: gradientBG 25s ease infinite; }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .font-typewriter { font-family: 'Special Elite', cursive; }
+        .glass-card { background: rgba(10, 10, 10, 0.6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="text-gray-200 flex items-center justify-center min-h-screen p-4">
+<div class="glass-card w-full max-w-4xl p-8 rounded-lg shadow-2xl shadow-black/50 text-center">
+    <header class="mb-6">
+        <h1 class="font-typewriter text-5xl font-bold text-green-400"><?php echo htmlspecialchars($sala->getNomeSala()); ?></h1>
+    </header>
+    <div class="text-gray-300 space-y-4">
+        <p class="text-2xl text-yellow-400">A aventura está prestes a começar!</p>
+        <p>A interface da sala de jogo está em desenvolvimento.</p>
+    </div>
+    <div class="mt-8">
+        <a href="/dashboard" class="inline-block bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-6 rounded-lg">Voltar ao Painel</a>
+    </div>
+</div>
+</body>
+</html>

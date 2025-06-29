@@ -2,6 +2,8 @@
 
 namespace App\Application\Controllers;
 
+use App\Domain\Repositories\PersonagemRepositoryInterface;
+use App\Domain\Services\AssociarPersonagemService;
 use App\Domain\Services\CriarSalaService;
 use App\Domain\Services\EntrarSalaService;
 use App\Domain\Services\EditarSalaService;
@@ -30,6 +32,8 @@ class SalaController
     private SairSalaService $sairSalaService;
     private SistemaRPGRepositoryInterface $sistemaRPGRepository;
     private SalaRepositoryInterface $salaRepository;
+    private AssociarPersonagemService $associarPersonagemService;
+    private PersonagemRepositoryInterface $personagemRepository;
 
     public function __construct(
         CriarSalaService $criarSalaService,
@@ -37,8 +41,10 @@ class SalaController
         EditarSalaService $editarSalaService,
         DeletarSalaService $deletarSalaService,
         SairSalaService $sairSalaService,
+        AssociarPersonagemService $associarPersonagemService,
         SistemaRPGRepositoryInterface $sistemaRPGRepository,
-        SalaRepositoryInterface $salaRepository
+        SalaRepositoryInterface $salaRepository,
+        PersonagemRepositoryInterface $personagemRepository
     ) {
         $this->criarSalaService = $criarSalaService;
         $this->entrarSalaService = $entrarSalaService;
@@ -47,6 +53,8 @@ class SalaController
         $this->sairSalaService = $sairSalaService;
         $this->sistemaRPGRepository = $sistemaRPGRepository;
         $this->salaRepository = $salaRepository;
+        $this->associarPersonagemService = $associarPersonagemService;
+        $this->personagemRepository = $personagemRepository;
     }
 
     /**
@@ -220,6 +228,82 @@ class SalaController
         header('Location: /dashboard');
         exit();
     }
+
+    /**
+     * Ponto de entrada para uma sala de jogo.
+     * Verifica se o utilizador precisa de selecionar um personagem ou se já pode entrar no jogo.
+     * Lida com a requisição GET para /sala/{id}.
+     */
+    public function exibirEntradaSala(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit(); }
+
+        try {
+            $idUsuario = $_SESSION['user_id'];
+            $sala = $this->salaRepository->buscarPorId($id);
+            if ($sala === null) { throw new Exception("Sala não encontrada."); }
+
+            // Se o utilizador for o mestre, ele não precisa de selecionar personagem.
+            if ($sala->idMestre === $idUsuario) {
+                // Futuramente, redirecionará para a sala de jogo. Por agora, uma mensagem.
+                $this->renderView('salas/jogo', ['sala' => $sala]);
+                return;
+            }
+
+            $participante = $this->salaRepository->buscarParticipante($id, $idUsuario);
+            if ($participante === null) { throw new AcessoNegadoException("Você não participa nesta sala."); }
+
+            // Se o jogador já associou um personagem, entra direto no jogo.
+            if (!empty($participante['id_personagem'])) {
+                $this->renderView('salas/jogo', ['sala' => $sala]);
+                return;
+            }
+
+            // Se não, busca os personagens compatíveis para a seleção.
+            $personagensDoUsuario = $this->personagemRepository->buscarPorUsuarioId($idUsuario);
+            $personagensCompativeis = array_filter($personagensDoUsuario, function($info) use ($sala) {
+                return $info['personagem']->getIdSistema() === $sala->idSistema;
+            });
+
+            $this->renderView('salas/selecionar-personagem', [
+                'sala' => $sala,
+                'personagens' => $personagensCompativeis
+            ]);
+
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+            header('Location: /dashboard');
+            exit();
+        }
+    }
+
+    /**
+     * Processa a seleção de personagem para uma sala.
+     * Lida com a requisição POST para /sala/{id}/selecionar.
+     */
+    public function processarSelecaoPersonagem(int $id): void
+    {
+        if (!isset($_SESSION['user_id'])) { header('Location: /login'); exit(); }
+
+        try {
+            $idUsuario = $_SESSION['user_id'];
+            $idPersonagem = filter_input(INPUT_POST, 'id_personagem', FILTER_VALIDATE_INT);
+
+            if (!$idPersonagem) { throw new Exception("Nenhum personagem foi selecionado."); }
+
+            $this->associarPersonagemService->executar($id, $idUsuario, $idPersonagem);
+
+            // Sucesso: Redireciona para a própria sala, onde agora entrará direto.
+            header("Location: /sala/{$id}");
+            exit();
+
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = ['type' => 'erro', 'message' => $e->getMessage()];
+            header("Location: /sala/{$id}");
+            exit();
+        }
+    }
+
 
     /**
      * Método auxiliar para renderizar uma View.
